@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>partychat</name>
+	<name>talkbots</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -14,16 +14,4 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>bin</name>
-			<type>2</type>
-			<location>/Users/ak/Documents/talkbots/bin</location>
-		</link>
-		<link>
-			<name>src</name>
-			<type>2</type>
-			<location>/Users/ak/Documents/talkbots/src</location>
-		</link>
-	</linkedResources>
 </projectDescription>

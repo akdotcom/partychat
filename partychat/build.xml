@@ -40,8 +40,8 @@
       <java fork="yes" classname="net.q00p.bots.partybot.PartyBot" failonerror="true">
         <classpath refid="classpath.path"/>
         <arg value="partybot"/>
-        <arg value="googletalkusn"/>
-        <arg value="googletalkpwd"/>
+        <arg value="username"/>
+        <arg value="password"/>
       </java>
   </target>
 
@@ -49,8 +49,8 @@
 	      <java fork="yes" classname="net.q00p.bots.echobot.EchoBot" failonerror="true">
 	        <classpath refid="classpath.path"/>
 	        <arg value="echobot"/>
-	        <arg value="googletalkusn"/>
-	        <arg value="googletalkpwd"/>
+	        <arg value="username"/>
+		<arg value="password"/>
 	      </java>
 	  </target>
 

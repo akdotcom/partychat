@@ -1,0 +1,256 @@
+<html>
+<head>
+  <title>RoShamBot</title>
+  <style>
+pre, tt { color : green; }
+.foo { color: red; }
+.bar { color: blue; }
+.bot { color: black; font-weight: bold; }
+TABLE TD { padding-right: 10px; padding-top: 0px; }
+  </style>
+</head>
+<body>
+
+
+<table style="width: 100%">
+<tr>
+ <td style="width:100%">
+   <span style="font-size: 20pt">RoShamBot</span><br>
+   <i><a href="mailto:bolinfest@google.com">Michael Bolin</a></i> -
+   <i>November 21, 2005</i>
+ </td>
+ <td style="text-align: right">
+   <img src="talk_logo.gif">
+ </td>
+ </tr>
+</table>
+
+<p>
+<center>
+  <span style="color: red; font-weight: bold;">
+  I'm not sure, but this page may not be appropriate to send out to Misc because
+  of the <a href="#benefits">Benefits for Google</a> section.
+  </span>
+</center>
+
+<p>
+Despite what Eric Cartman on South Park may tell you,
+<a href="http://en.wikipedia.org/wiki/Rock,_Paper,_Scissors">Roshambo</a>
+is one of the <a href="http://en.wikipedia.org/wiki/Rock,_Paper,_Scissors#Other_names">many names</a>
+for Rock, Paper, Scissors. I created RoShamBot as a bot for Google Talk
+that can mediate roshams between (and soon, among!) users.
+Send a message to <b>rochambot@gmail.com</b> on Google Talk to check it out!
+
+<h3>Table of Contents</h3>
+
+<ul>
+ <li><a href="#why">Why</a></li>
+ <li><a href="#example">Example</a></li>
+ <li><a href="#usage">Usage</a></li>
+ <li><a href="#history">History</a></li>
+ <li><a href="#benefits">Benefits for Google</a></li>
+ <li><a href="#faq">FAQ</a></li>
+ <li><a href="#future">Future Work</a></li>
+ <li><a href="#bugs">Known Bugs</a></li>
+</ul>
+
+<h3><a name="why">Why</a></h3>
+
+If you've ever tried to do a rosham over the phone or on AIM,
+then you'll probably recognize why this is a problem.
+Consider the brothers <span class="foo">foo</span> and <span class="bar">bar</span>
+in this example:
+
+<pre style="color:black">
+<span class="foo">foo (12:10pm):</span> rosham take out the trash?
+<span class="bar">bar (12:11pm):</span> k
+<span class="foo">foo (12:35pm):</span> you haven't thrown yet
+<span class="bar">bar (12:35pm):</span> well i was waiting for u
+<span class="foo">foo (12:36pm):</span> i'm not going first -- u r
+
+etc.
+</pre>
+
+<h3><a name="example">Example</a></h3>
+
+Here is the above dispute, resolved with the help of RoShamBot:
+
+<p>
+
+<table>
+
+<tr>
+  <td style="width:50%"><span class="foo">foo's</span> conversation with <span class="bot">rochambot</b></td>
+  <td style="width:50%"><span class="bar">bar's</span> conversation with <span class="bot">rochambot</b></td>
+</tr>
+
+<tr><td>&nbsp;</td></td>&nbsp;</td></tr>
+
+<tr><td><span class="foo">foo:</span> rosham bar "take out the trash"</td><td>&nbsp;</td></tr>
+
+<tr>
+  <td><span class="bot">rochambot:</span> You have challenged bar to a best-of-3 rosham for "take out the trash." What is your opening throw?</td>
+  <td><span class="bot">rochambot:</span> foo has challenged you to a best-of-3 rosham for "take out the trash." What is your opening throw?</td>
+</tr>
+
+<tr><td><span class="foo">foo:</span> rock</td><td><span class="bar">bar:</span> scissors</td></tr>
+
+<tr>
+  <td><span class="bot">rochambot:</span> ROCK beats PAPER, so foo won that round. What is your next throw?</td>
+  <td><span class="bot">rochambot:</span> ROCK beats PAPER, so foo won that round. What is your next throw?</td>
+</tr>
+
+<tr><td><span class="foo">foo:</span> scissors</td><td><span class="bar">bar:</span> paper</td></tr>
+
+<tr>
+  <td><span class="bot">rochambot:</span> SCISSORS beats PAPER, so foo won that round. foo wins the rosham for "take out the trash."</td>
+  <td><span class="bot">rochambot:</span> SCISSORS beats PAPER, so foo won that round. foo wins the rosham for "take out the trash."</td>
+</tr>
+
+</table>
+
+<h3><a name="usage">Usage</a></h3>
+
+To start a rosham, send <b>rochambot@gmail.com</b> the following message on Google Talk:
+<pre>
+rosham <i>username</i> <i>[quoted message]</i> <i>[throws]</i>
+</pre>
+
+<dl>
+  <dt><tt><i>username</i></tt>
+  <dd>the username of your desired opponent
+
+  <dt><tt><i>quoted message</i></tt>
+  <dd>(optional) a message, in double quotes, 
+    that will be sent to your opponent as the reason for the rosham
+
+  <dt><tt><i>throws</i></tt>
+  <dd>(optional) a sequence of throws that you want to make;
+    you can specify all of your throws in advance, if you desire
+</dl>
+
+In the above example, if <span class="foo">foo</span> wanted his first three throws to be rock,
+he could have sent the following message initially:
+
+<pre>
+rosham bar "take out the trash" rock rock rock
+</pre>
+or:
+<pre>
+rosham bar "take out the trash" avalanche
+</pre>
+What, you may ask, is an <tt>avalanche</tt>? It is one of the gambits are taken from the
+<a href="http://worldrps.com/gambits.html">list maintained at worldrps.com</a>.
+The complete list of throws that RoShamBot recognizes appears in the table below:
+
+<p>
+<table cellspacing="4" id="throws">
+  <tr><td><pre>r</pre></td><td>ROCK</td></tr>
+  <tr><td><pre>p</pre></td><td>PAPER</td></tr>
+  <tr><td><pre>s</pre></td><td>SCISSORS</td></tr>
+  <tr><td><pre>rock</pre></td><td>ROCK</td></tr>
+  <tr><td><pre>paper</pre></td><td>PAPER</td></tr>
+  <tr><td><pre>scissors</pre></td><td>SCISSORS</td></tr>
+  <tr><td><pre>the-crescendo</pre></td><td>PAPER, SCISSORS, ROCK</td></tr>
+  <tr><td><pre>denouement</pre></td><td>ROCK, SCISSORS, PAPER</td></tr>
+  <tr><td><pre>fistful-o-dollars</pre></td><td>ROCK, PAPER, PAPER</td></tr>
+  <tr><td><pre>avalanche</pre></td><td>ROCK, ROCK, ROCK</td></tr>
+  <tr><td><pre>scissor-sandwich</pre></td><td>PAPER, SCISSORS, PAPER</td></tr>
+  <tr><td><pre>paper-dolls</pre></td><td>PAPER, SCISSORS, SCISSORS</td></tr>
+</table>
+<p>
+
+<h3><a name="history">History</a></h3>
+
+Last year at MIT, I built <b>PrisonerBot</b>, which is an
+<a href="http://www.bolinfest.com/prisonerbot.php">AIM bot that facilitaed the Prisoner's Dilemma</a>
+for part of a research project. Originally, I tried to use
+<a href="http://jaimlib.sourceforge.net/">a Java implementation
+of AOL's TOC protocol</a>, but gave up because
+the API was very weak. Then I moved on to the OSCAR protocol
+(using the <a href="https://daim.dev.java.net/">daim</a> library, also written in Java),
+but ran into problems because AOL would cut off my bot due to <b>rate-limiting</b>.
+Eventually, the adviser of the project decided to run his own Jabber server,
+and I was able to write my bot using the <a href="http://www.jivesoftware.org/smack/">Smack</a>
+library, which is a Jabber API written in Java. Using Jabber to sidestep the rate-limiting
+problem was great; however, it did preclude us from opening our bot up to the entire AIM
+community.
+<p>
+After the project, I realized that a bot to faciliate Roshambo was not very different from
+a bot that facilitates the Prisoner's Dilemma. More importantly, a RoShamBot could be much
+more useful to me and my friends than a PrisonerBot, and it also had a much better name!
+I tried to register the AIM screen name <b>RoShamBot</b>; however, it was taken, so I ended up
+registering <b>JanKenBot</b> (a variation on the Japanese name for Rock-Paper-Scissors), but
+never got around to doing anything with it since I had to finish my thesis.
+<p>
+When Google Talk launched, I tried to register <b>roshambot@gmail.com</b>, but unfortunately,
+it was also taken. I ended up settling for <b>rochambot@gmail.com</b> instead, since that's kinda
+close if you consider the "French" spelling, <b>Rochambeau.</b> I concede that if RoShamBot ever
+catches on, the guy who actually owns roshambot@gmail.com might end up with a lot of strange
+messages on Google Talk, but that's his problem for taking <i>my</i> name!
+
+<h3><a name="benefits">Benefits for Google</a></h3>
+
+Until YJ launches, I think that it's difficult to show people what sets Google Talk apart from
+existing chat services. One area in which we could outdo the other guys is with bots.
+(This may not be earth-shattering, but it could at least draw some good press about Google Talk.)
+<p>
+AOL seems to be stepping up its interest in bots &#150; now when I log into AIM,
+I see a special section for bots where <b>MovieFone</b> and <b>ShoppingBuddy</b>
+have automatically been added. The last time I checked, if an ordinary person wanted
+to run an AIM bot (that was free from rate-limiting), it cost at least $10,000.
+So to attract people to mess around with Google Talk, why not release a small toolkit
+to help people write bots (that they would host themselves), but highlight the fact
+that they would be free from rate-limiting!
+<p>
+Obviously this raises large issues: (1) Is this an invitation for spam, and (2) what sort of load
+will this place on our servers? The answer to (1) is probably yes, and I know absolutely nothing
+about (2), but perhaps adopting the following policy would help: a user can register an account
+as a bot (through some webform that doesn't exist yet), and the bot will be free from rate-limiting
+(so long as it doesn't hose our servers). The bot will be allowed to send as many messages as
+it wants to another user, <i>so long as the user messages the bot first</i>. Obviously, for RoShamBot,
+this would be a bit of a problem, since I may want to rosham someone who has never messaged
+RoShamBot. In this case, I could just tell my opponent to say hi to RoShamBot before starting so
+RoShamBot would be able to message him back. This sort of workaround may not be acceptable for
+other types of bots, though.
+<p>
+To recapitulate, if we encourage people to write bots for Google Talk, then hopefully that would bring more
+new users to the product. Even if it didn't, it should provide some press for Google Talk, which is
+worth something. We have seen people do a number of amazing things with Maps by publishing its API,
+so hopefully we could see a similar response by encouraging users to experiment with Talk in this way.
+
+<h3><a name="faq">FAQ</a></h3>
+
+<b>Why don't you call it </b>RoChamBot<b> instead so people don't get confused?</b><br>
+Because I think it looks silly that way.
+<p>
+<b>Does RoShamBot scale if a large number of people are using it?</b><br>
+I don't know, it might :)
+<p>
+<b>Why doesn't RoShamBot support roshams of more than two people?</b><br>
+Mainly because I haven't had a chance to implement it yet.
+The hooks are there for it in the code.
+<p>
+<b>Why can't I be involved in more than one rosham at once?</b><br>
+Mainly because it would be confusing and error-prone:
+it would be easy to submit a throw for the wrong rosham if you
+were involved in multiple ones. Since each rosham should not take
+very long, I do not consider this to be a major limitation.
+
+<h3><a name="future">Future Work</a></h3>
+
+The number of things that RoShamBot can say is very limited,
+so his language feels stilted.
+He needs to be much more tolerable of what users type in,
+and be better at offering help to users.
+Also, when you're in the middle of a rosham, it may be hard
+to tell who is winning and whatnot; it is easy to lose one's context.
+In short, the business logic of RoShamBot seems to be working well,
+but the user experience needs to be improved. 
+
+<h3><a name="bugs">Known Bugs</a></h3>
+
+None yet, but I'm sure you'll let me know.
+
+</body>
+</html>
