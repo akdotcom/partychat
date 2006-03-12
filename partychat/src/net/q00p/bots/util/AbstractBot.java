@@ -1,6 +1,5 @@
 package net.q00p.bots.util;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 

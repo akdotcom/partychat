@@ -58,8 +58,7 @@ public class Connection implements MessageSender {
 	          org.jivesoftware.smack.packet.Message rawMessage = 
 	        	  	(org.jivesoftware.smack.packet.Message)packet;
 	          if (rawMessage.getBody() != null) {
-	            Logger.log(rawMessage.getFrom() + " -> " + rawMessage.getTo() 
-	            		+ " : " + rawMessage.getBody());
+	            Logger.log(rawMessage.getFrom() + " -> " + rawMessage.getTo()); 
 	            User user = User.get(packet.getFrom());
 	            Message message = new Message(user, 
 	            		User.get(packet.getTo().split("/")[0], bot.botName()),
@@ -114,8 +113,8 @@ public class Connection implements MessageSender {
 			}
 			try {
 				chat.sendMessage(msg.getContent());
-				Logger.log(msg.getFrom() + " -> " + msg.getTo() + " : " 
-							+ msg.getContent());
+//				Logger.log(msg.getFrom() + " -> " + msg.getTo() + " : " 
+//							+ msg.getContent());
 			} catch (XMPPException e) {
 				System.err.println(e);
 			}
