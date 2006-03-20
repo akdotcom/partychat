@@ -42,7 +42,7 @@ public class PartyBot extends AbstractBot {
 	public static String CREATE = "/make";
 	public static String COMMANDS = "/commands";
 	
-	static final String MESSAGE_FORMAT = "[%s] %s";
+	static final String MESSAGE_FORMAT = "%s *:* %s";
 	
 	static final String HELP_PROMPT = "to enter a party chat, type " +
 			"'%s chat_name [password]' (password may not be required)\n" +
