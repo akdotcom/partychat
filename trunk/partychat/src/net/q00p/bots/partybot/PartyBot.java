@@ -38,6 +38,7 @@ public class PartyBot extends AbstractBot {
 	public static String STATUS = "/status";
 	public static String LIST = "/list";
 	public static String ALIAS = "/alias";
+    public static String SCORE = "/score";
 	public static String EXIT = "/exit";
 	public static String HELP = "/help";
 	public static String CREATE = "/make";
@@ -305,6 +306,8 @@ public class PartyBot extends AbstractBot {
 				
 				"%s [name] - give yourself an alias; if you do not specify a name," +
 				" your current alias is removed.\n\n" +
+                
+                 "%s [name] - return the score for a given name" +
 
 				"%s - leave the party chat you are currently in.\n\n" +
 				
@@ -312,7 +315,7 @@ public class PartyBot extends AbstractBot {
 				"directs users to '" + COMMANDS + "'.\n\n" +
 				
 				"%s - displays this menu", 
-								CREATE, JOIN, STATUS, LIST, ALIAS, EXIT, HELP, COMMANDS);
+								CREATE, JOIN, STATUS, LIST, ALIAS, SCORE, EXIT, HELP, COMMANDS);
 	}
 	
 	private String saveState(Subscriber subscriber) {
