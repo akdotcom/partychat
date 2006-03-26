@@ -70,6 +70,8 @@ public class PartyBot extends AbstractBot {
 				Pattern.CASE_INSENSITIVE);
 	private static final Pattern STATUS_RX = 
 		Pattern.compile("(status)(\\s+\\S+)*");
+    private static final Pattern SCORE_RX =
+         Pattern.compile("(score)\\s*(\\S+)");
 	private static final Pattern LIST_RX = 
 		Pattern.compile("(list|members)(\\s+\\S+)*");
 	private static final Pattern ALIAS_RX = 
@@ -225,6 +227,14 @@ public class PartyBot extends AbstractBot {
 		if (matcher.matches()) {
 			return saveState(subscriber);
 		}
+        
+        matcher = SCORE_RX.matcher(command);
+        if (matcher.matches()) {
+          PartyLine partyLine = lineManager.getPartyLine(subscriber);
+            if (partyLine == null)
+                return LineManager.NOT_IN;
+          return printScore(partyLine.getName(), matcher.group(2));
+        }
 		
 		return unknownCommand(command);
 	}
@@ -275,6 +285,10 @@ public class PartyBot extends AbstractBot {
 		}
 		return sb.toString();
 	}
+    
+    private String printScore(String chat, String regex) {
+      return plusPlusBot.getScores(chat, regex);
+    }
 	
 	private String getCommands() {
 		return String.format("PartyChat commands: \n\n" +

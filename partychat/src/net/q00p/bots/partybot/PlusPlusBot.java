@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import net.q00p.bots.Message;
 import net.q00p.bots.util.AbstractBot;
@@ -102,5 +103,34 @@ public class PlusPlusBot {
       return "";
     }
     return "(" + reason + ")";
+  }
+
+
+  public String getScores(String chat, String regex) {
+    StringBuilder result = new StringBuilder();
+    
+    Pattern searchPattern;
+    try {
+      searchPattern = Pattern.compile(regex);
+    } catch (RuntimeException e) {
+      return "invalid pattern";
+    }
+    
+    Map<String, Integer> scores = getScoreBoard(chat);
+    for (String key : scores.keySet()) {
+      if (searchPattern.matcher(key).matches()) {
+        if (result.length() > 0) {
+          result.append("\n");
+        }
+        result.append(key).append(":").append(scores.get(key));
+      }
+    }
+    
+    
+    if (result.length() == 0) {
+      return "no scores found";
+    }
+    
+    return result.toString();
   }
 }
