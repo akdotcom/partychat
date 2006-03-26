@@ -32,6 +32,7 @@ public class PartyBot extends AbstractBot {
 	private final LineManager lineManager;
 	private final Timer timer;
 	private final StateSaver sh;
+    private final PlusPlusBot plusPlusBot;
 
 	public static String JOIN = "/enter";
 	public static String STATUS = "/status";
@@ -88,11 +89,15 @@ public class PartyBot extends AbstractBot {
 	
 	private static final Pattern COMMAND_RX = 
 		Pattern.compile("/(.*)");
+    private static final Pattern PLUSPLUS_RX =
+        Pattern.compile("(\\S+)(\\+\\+|\\-\\-)(.*)");
 
 
 	private PartyBot(String name) {
 		super(name);
 		lineManager = loadState();
+        
+        plusPlusBot = new PlusPlusBot();
 
 		sh = new StateSaver(lineManager);
         	Runtime.getRuntime().addShutdownHook(new Thread(sh));
@@ -107,13 +112,36 @@ public class PartyBot extends AbstractBot {
 			Subscriber.get(message.getFrom(), message.getTo().getName());
 		
 		String output = null;
+        PartyLine partyLine = lineManager.getPartyLine(subscriber);
 
-		Matcher matcher = COMMAND_RX.matcher(content);
-		if (matcher.matches()) {
-			output = doCommand(subscriber, matcher.group(1));
-		} else {
+        Matcher commandMatcher = COMMAND_RX.matcher(message.getPlainContent());
+        Matcher plusPlusMatcher = PLUSPLUS_RX.matcher(message.getPlainContent());
+		if (commandMatcher.matches()) {
+		  output = doCommand(subscriber, commandMatcher.group(1));
+		} else if (plusPlusMatcher.matches()) {
+          String target = plusPlusMatcher.group(1);
+          String delta = plusPlusMatcher.group(2);
+          String reason = plusPlusMatcher.group(3);
+          
+          Message plusPlusResponse = null;
+          
+          if ("++".equals(delta)) {
+            plusPlusResponse = plusPlusBot.increment(
+                message, partyLine.getName(), target, reason);
+          } else {
+            plusPlusResponse = plusPlusBot.decrement(
+                message, partyLine.getName(), target, reason);
+          }
+          
+          if (plusPlusResponse != null) {
+            // TODO(dolapo): share this. ak is rushing meee! who knows if this works?
+            User plusPlus = User.get("plusplusbot", "bot");
+            Subscriber botSubscriber = Subscriber.get(plusPlus, null);
+            output = broadcast(botSubscriber, partyLine, plusPlusResponse);
+          }
+          
+        } else {
 			// must be broadcasting
-			PartyLine partyLine = lineManager.getPartyLine(subscriber);
 			if (partyLine != null)
 				output = broadcast(subscriber, partyLine, message);
 			else
