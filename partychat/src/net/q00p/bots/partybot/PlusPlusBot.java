@@ -74,16 +74,14 @@ public class PlusPlusBot {
     currentScore = increment ? currentScore + 1 : currentScore - 1;
     scores.put(target, currentScore);
     
-    StringBuilder result = new StringBuilder();
-    Formatter f = new Formatter(result);
     String actor = message.getFrom().getName();
     String formattedReason = getReasonString(reason);
     
     String format = increment ? INC_MESSAGE_FORMAT : DEC_MESSAGE_FORMAT;
     
-    f.format(format, target, currentScore, formattedReason);
+    String result = String.format(format, target, currentScore, formattedReason);
     
-    Message m = new Message(null, null, result.toString());
+    Message m = new Message(null, null, result);
     
     return m;
   }
