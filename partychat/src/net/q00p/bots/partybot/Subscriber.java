@@ -19,7 +19,7 @@ public class Subscriber implements Serializable {
 	
 	private static Map<Tuple<User,String>,Subscriber> cache = 
 		new HashMap<Tuple<User,String>,Subscriber>();
-	private static String ALIAS_TEMPLATE = "*%s*";
+	private static String ALIAS_TEMPLATE = "\"%s\"";
 
 	public static Subscriber get(User user, String botScreenName) {
 		Tuple<User,String> pair = new Tuple<User,String>(user, botScreenName);

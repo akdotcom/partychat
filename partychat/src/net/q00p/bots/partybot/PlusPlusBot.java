@@ -3,7 +3,6 @@
 package net.q00p.bots.partybot;
 
 import java.util.Collections;
-import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -11,7 +10,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import net.q00p.bots.Message;
-import net.q00p.bots.util.AbstractBot;
 
 /**
  * Simple plusplusbot implementation.
@@ -24,10 +22,10 @@ import net.q00p.bots.util.AbstractBot;
 public class PlusPlusBot {
   
   private static final String INC_MESSAGE_FORMAT =
-    "yaay, %s: %d %s";
+    "woot! %s -> %d (%s)";
   
   private static final String DEC_MESSAGE_FORMAT =
-    "ouch, %s: %d %s";
+    "ouch! %s -> %d (%s)";
   
   /**
    * Things that can't be ++d
@@ -100,7 +98,7 @@ public class PlusPlusBot {
     if (reason == null || reason.trim().length() == 0) {
       return "";
     }
-    return "(" + reason + ")";
+    return reason;
   }
 
 

@@ -7,8 +7,6 @@ import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -44,7 +42,7 @@ public class PartyBot extends AbstractBot {
 	public static String CREATE = "/make";
 	public static String COMMANDS = "/commands";
 	
-	static final String MESSAGE_FORMAT = "%s *:* %s";
+	static final String MESSAGE_FORMAT = "[%s] %s";
 	
 	static final String HELP_PROMPT = "to enter a party chat, type " +
 			"'%s chat_name [password]' (password may not be required)\n" +
@@ -89,11 +87,10 @@ public class PartyBot extends AbstractBot {
 		Pattern.compile("(save-state)(\\s+\\S+)*", 
 				Pattern.CASE_INSENSITIVE);
 
-	
 	private static final Pattern COMMAND_RX = 
 		Pattern.compile("/(.*)");
     private static final Pattern PLUSPLUS_RX =
-        Pattern.compile("(\\S+)(\\+\\+|\\-\\-)(.*)");
+        Pattern.compile("(\\S+)(\\+\\+|\\-\\-)\\W*(\\w.*)");
 
 
 	private PartyBot(String name) {
@@ -139,8 +136,8 @@ public class PartyBot extends AbstractBot {
           if (plusPlusResponse != null) {
             // TODO(dolapo): share this. ak is rushing meee! who knows if this works?
             User plusPlus = User.get("plusplusbot", "bot");
-            Subscriber botSubscriber = Subscriber.get(plusPlus, null);
-            output = broadcast(botSubscriber, partyLine, plusPlusResponse);
+            Subscriber botSubscriber = Subscriber.get(plusPlus, "");
+            output = broadcast(botSubscriber, partyLine, plusPlusResponse, true);
           }
           
         } else {
@@ -240,19 +237,31 @@ public class PartyBot extends AbstractBot {
 		return unknownCommand(command);
 	}
 	
-	String broadcast(Subscriber subscriber, PartyLine partyLine, Message message) {
+	/** @return message you want sent back to the broadcaster/subscriber */
+	String broadcast(Subscriber subscriber, PartyLine partyLine, 
+			Message message, boolean isSystem) {
+		String content;
+		if (isSystem)
+			content = message.getContent();
+		else
+			content = String.format(MESSAGE_FORMAT, 
+					               subscriber.getDisplayName(),
+					               message.getContent());
+		
 		for (Subscriber listener : partyLine.getSubscribers()) {
 			if (! listener.equals(subscriber)) {
-				String content = String.format(MESSAGE_FORMAT, 
-											subscriber.getDisplayName(),
-											message.getContent());
 				Message msg = new Message(
-						User.get(listener.getBotScreenName(),botName()), 
+						User.get(listener.getBotScreenName(), botName()), 
 						listener.getUser(), content);
 				getMessageSender().sendMessage(msg);
 			}
 		}
+
 		return null;
+	}
+	
+	String broadcast(Subscriber subscriber, PartyLine partyLine, Message message) {
+		return broadcast(subscriber, partyLine, message, false);
 	}
 
 	private String getStatus(Subscriber sub) {
