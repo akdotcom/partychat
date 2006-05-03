@@ -70,7 +70,7 @@ public class PartyBot extends AbstractBot {
 	private static final Pattern STATUS_RX = 
 		Pattern.compile("(status)(\\s+\\S+)*");
     private static final Pattern SCORE_RX =
-         Pattern.compile("(score)\\s*(\\S+)");
+         Pattern.compile("(score)\\s+(\\S+)");
 	private static final Pattern LIST_RX = 
 		Pattern.compile("(list|members)(\\s+\\S+)*");
 	private static final Pattern ALIAS_RX = 
@@ -90,7 +90,7 @@ public class PartyBot extends AbstractBot {
 	private static final Pattern COMMAND_RX = 
 		Pattern.compile("/(.*)");
     private static final Pattern PLUSPLUS_RX =
-        Pattern.compile("(\\S+)(\\+\\+|\\-\\-)\\W*(\\w.*)");
+        Pattern.compile("(\\S+)(\\+\\+|\\-\\-)\\W*(\\w+.*)");
 
 
 	private PartyBot(String name) {
@@ -132,6 +132,9 @@ public class PartyBot extends AbstractBot {
             plusPlusResponse = plusPlusBot.decrement(
                 message, partyLine.getName(), target, reason);
           }
+          
+          // broadcast whatever they just said
+          broadcast(subscriber, partyLine, message);
           
           if (plusPlusResponse != null) {
             // TODO(dolapo): share this. ak is rushing meee! who knows if this works?
@@ -316,7 +319,7 @@ public class PartyBot extends AbstractBot {
 				"%s [name] - give yourself an alias; if you do not specify a name," +
 				" your current alias is removed.\n\n" +
                 
-                 "%s [name] - return the score for a given name" +
+                 "%s [name] - return the score for a given name.\n\n" +
 
 				"%s - leave the party chat you are currently in.\n\n" +
 				
