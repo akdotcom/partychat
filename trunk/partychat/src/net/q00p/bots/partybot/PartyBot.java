@@ -90,7 +90,7 @@ public class PartyBot extends AbstractBot {
 	private static final Pattern COMMAND_RX = 
 		Pattern.compile("/(.*)");
     private static final Pattern PLUSPLUS_RX =
-        Pattern.compile("(\\S+)(\\+\\+|\\-\\-)\\W*(\\w*.*)");
+        Pattern.compile(".*(\\S+)(\\+\\+|\\-\\-)\\W*(\\w*.*)");
 
 
 	private PartyBot(String name) {
