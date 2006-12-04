@@ -10,11 +10,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -199,30 +201,36 @@ public class PlusPlusBot {
 
 
   public String getScores(String chat, String regex) {
-    Iterable<Map.Entry<String, Integer>> toShow =
-      getScoreBoard(chat).entrySet();
+    List<Entry<String, Integer>> toShow =
+      new ArrayList<Entry<String, Integer>>();
+    
+    Set<Entry<String, Integer>> allScores = getScoreBoard(chat).entrySet();
     
     if (regex != null && !regex.equals("")) {
       Pattern searchPattern;
-      List<Map.Entry<String, Integer>> matchList =
-        new ArrayList<Map.Entry<String, Integer>>();
-      
       try {
         searchPattern = Pattern.compile(regex);
       } catch (RuntimeException e) {
         return "invalid pattern";
       }
       
-      for (Map.Entry<String, Integer> elt : toShow) {
+      for (Entry<String, Integer> elt : allScores) {
         if (searchPattern.matcher(elt.getKey()).matches()) {
-          matchList.add(elt);
+          toShow.add(elt);
         }
       }  
-      toShow = matchList;
+    } else {
+      toShow.addAll(allScores);
+      Collections.sort(toShow, new Comparator<Entry<String, Integer>>() {
+        public int compare(Entry<String, Integer> a,
+            Entry<String, Integer> b) {
+          return a.getValue().compareTo(b.getValue());
+        }
+      });
     }
     
     StringBuilder result = new StringBuilder();
-    for (Map.Entry<String, Integer> elt : toShow) {
+    for (Entry<String, Integer> elt : toShow) {
       if (result.length() > 0) {
         result.append("\n");
       }
