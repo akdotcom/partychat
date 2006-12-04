@@ -2,11 +2,20 @@
 
 package net.q00p.bots.partybot;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.q00p.bots.Message;
@@ -21,6 +30,8 @@ import net.q00p.bots.Message;
  */
 public class PlusPlusBot {
   
+  private static final String LOG_DELIMITER = "\t";
+
   private static final String INC_MESSAGE_FORMAT =
     "woot! %s -> %d (%s)";
   
@@ -36,33 +47,128 @@ public class PlusPlusBot {
    * chat -> {targetscore}
    */
   private final Map<String, Map<String, Integer>> scoreBoard;
+
+  private BufferedWriter logFile;
   
   public PlusPlusBot() {
     blacklistedTargets = new HashSet<String>();
     scoreBoard = new HashMap<String, Map<String, Integer>>();
+    try {
+      logFile = prepareAndLoadLog("ppblog");
+    } catch (IOException e) {
+      System.err.println("Unable to log ppb!");
+    }
+  }
+
+  
+  /**
+   * We're too lazy to write proper tests. Use this instead. ;-)
+   */
+  public static void main(String[] args) {
+    Matcher matcher = Pattern.compile("(\\S+)(\\+\\+|\\-\\-)\\W*(\\w*.*)").matcher("cows++");
+    matcher.find();
+    System.err.println(matcher.group(1));
+    PlusPlusBot ppb = new PlusPlusBot();
+    System.out.println(ppb.getScores("chat", null));
+    ppb.doCommand("sender", "chat", "target", "reason", true);
+    System.out.println(ppb.getScores("chat", null));
+    try {
+      ppb.logFile.flush();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
+  
+  /**
+   * For now, assume partychat is so small that we can load a full log
+   * at startup.
+   * @throws IOException 
+   */
+  private BufferedWriter prepareAndLoadLog(String filename) throws IOException {
+    File file = new File(filename);
+    // Replay any existing log
+    if (file.exists()) {
+      BufferedReader rdr = new BufferedReader(new FileReader(file));
+      String line;
+      while (null != (line = rdr.readLine())) {
+        String[] logElts = line.split(LOG_DELIMITER);
+        if (logElts.length != 5) {
+          continue; // skip things we don't understand
+        }
+        doCommand(logElts[0], logElts[1], logElts[2], logElts[3],
+            logElts[4].equals("+"));
+      }
+      rdr.close(); // do we also need to close the file reader?
+    } else {
+      file.createNewFile();
+    }
+    return new BufferedWriter(new FileWriter(file, true));
   }
 
 
   public Message increment(
       Message message, String chat, String target, String reason) {
-    return doCommand(message, chat, target, reason, true);
+    return doCommand(message.getFrom().getName(), chat, target, reason, true);
   }
 
   public Message decrement(
       Message message, String chat, String target, String reason) {
-    return doCommand(message, chat, target, reason, false);
+    return doCommand(message.getFrom().getName(), chat, target, reason, false);
   }
 
 
-  public Message doCommand(
-      Message message, String chat, String target, String reason,
+  public Message doCommand(String from, String chat, String target, String reason,
       boolean increment) {
+    
+    // Skip the blacklist
     if (blacklistedTargets.contains(target)) {
       return null;
     }
     
-    int currentScore = 0;
+    // For old time's sake, also increment the letter associated with this action
+    if (target.length() > 1) {
+      getUpdatedScore(chat, target.substring(target.length() - 1), increment);
+    }
     
+    // Log the event
+    try {
+      logEvent(from, chat, target, reason, increment);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    
+    // Update the map
+    int currentScore = getUpdatedScore(chat, target, increment);
+    return getResponseMessage(target, reason, increment, currentScore);
+  }
+
+  private void logEvent(String from, String chat, String target, String reason,
+      boolean increment) throws IOException {
+    if (logFile == null) {
+      return;
+    }
+    reason = reason.replaceAll("\n", " ").replaceAll("\t", " "); // just in case
+    for (String s : new String[] {from, chat, target, reason}) {
+      logFile.write(s);
+      logFile.write(LOG_DELIMITER);
+    }
+    logFile.write(increment ? "+" : "-");
+    logFile.newLine();
+  }
+
+  private Message getResponseMessage(String target, String reason,
+      boolean increment, int currentScore) {
+    String formattedReason = getReasonString(reason);
+    String format = increment ? INC_MESSAGE_FORMAT : DEC_MESSAGE_FORMAT;
+    String result = String.format(format, target, currentScore, formattedReason);
+    Message m = new Message(null, null, result);
+    return m;
+  }
+
+
+  private int getUpdatedScore(String chat, String target, boolean increment) {
+    int currentScore = 0;
     Map<String, Integer> scores = getScoreBoard(chat);
 
     if (scores.containsKey(target)) {
@@ -71,17 +177,7 @@ public class PlusPlusBot {
     
     currentScore = increment ? currentScore + 1 : currentScore - 1;
     scores.put(target, currentScore);
-    
-    String actor = message.getFrom().getName();
-    String formattedReason = getReasonString(reason);
-    
-    String format = increment ? INC_MESSAGE_FORMAT : DEC_MESSAGE_FORMAT;
-    
-    String result = String.format(format, target, currentScore, formattedReason);
-    
-    Message m = new Message(null, null, result);
-    
-    return m;
+    return currentScore;
   }
   
   private synchronized Map<String, Integer> getScoreBoard(String chat) {
@@ -103,25 +199,37 @@ public class PlusPlusBot {
 
 
   public String getScores(String chat, String regex) {
-    StringBuilder result = new StringBuilder();
+    Iterable<Map.Entry<String, Integer>> toShow =
+      getScoreBoard(chat).entrySet();
     
-    Pattern searchPattern;
-    try {
-      searchPattern = Pattern.compile(regex);
-    } catch (RuntimeException e) {
-      return "invalid pattern";
-    }
-    
-    Map<String, Integer> scores = getScoreBoard(chat);
-    for (String key : scores.keySet()) {
-      if (searchPattern.matcher(key).matches()) {
-        if (result.length() > 0) {
-          result.append("\n");
-        }
-        result.append(key).append(":").append(scores.get(key));
+    if (regex != null && !regex.equals("")) {
+      Pattern searchPattern;
+      List<Map.Entry<String, Integer>> matchList =
+        new ArrayList<Map.Entry<String, Integer>>();
+      
+      try {
+        searchPattern = Pattern.compile(regex);
+      } catch (RuntimeException e) {
+        return "invalid pattern";
       }
+      
+      for (Map.Entry<String, Integer> elt : toShow) {
+        if (searchPattern.matcher(elt.getKey()).matches()) {
+          matchList.add(elt);
+        }
+      }  
+      toShow = matchList;
     }
     
+    StringBuilder result = new StringBuilder();
+    for (Map.Entry<String, Integer> elt : toShow) {
+      if (result.length() > 0) {
+        result.append("\n");
+      }
+      result.append(elt.getKey())
+            .append(":")
+            .append(elt.getValue());
+    }
     
     if (result.length() == 0) {
       return "no scores found";
