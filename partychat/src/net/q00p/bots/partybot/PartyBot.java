@@ -69,8 +69,10 @@ public class PartyBot extends AbstractBot {
         Pattern.CASE_INSENSITIVE);
   private static final Pattern STATUS_RX = 
     Pattern.compile("(status)(\\s+\\S+)*");
-    private static final Pattern SCORE_RX =
-         Pattern.compile("(score)\\s+(.*)");
+  private static final Pattern SCORE_RX =
+       Pattern.compile("(score)\\s*(.*)");
+  private static final Pattern ME_RX =
+    Pattern.compile("(me)\\s+(.*)");
   private static final Pattern LIST_RX = 
     Pattern.compile("(list|members)(\\s+\\S+)*");
   private static final Pattern ALIAS_RX = 
@@ -118,32 +120,33 @@ public class PartyBot extends AbstractBot {
     Matcher plusPlusMatcher = PLUSPLUS_RX.matcher(content);
     if (commandMatcher.matches()) {
       output = doCommand(subscriber, commandMatcher.group(1));
-    } else if (plusPlusMatcher.matches()) {
-          String target = plusPlusMatcher.group(1);
-          String delta = plusPlusMatcher.group(2);
-          String reason = plusPlusMatcher.group(3);
-          
-          Message plusPlusResponse = null;
-          
-          if ("++".equals(delta)) {
-            plusPlusResponse = plusPlusBot.increment(
-                message, partyLine.getName(), target, reason);
-          } else {
-            plusPlusResponse = plusPlusBot.decrement(
-                message, partyLine.getName(), target, reason);
-          }
-          
-          // broadcast whatever they just said
-          broadcast(subscriber, partyLine, message);
-          
-          if (plusPlusResponse != null) {
-            // TODO(dolapo): share this. ak is rushing meee! who knows if this works?
-            User plusPlus = User.get("plusplusbot", "bot");
-            Subscriber botSubscriber = Subscriber.get(plusPlus, "");
-            output = broadcast(botSubscriber, partyLine, plusPlusResponse, true);
-          }
-          
-        } else {
+    } else if (plusPlusMatcher.find()) {
+      String target = plusPlusMatcher.group(1);
+      String delta = plusPlusMatcher.group(2);
+      String reason = plusPlusMatcher.group(3);
+      
+      Message plusPlusResponse = null;
+      
+      if ("++".equals(delta)) {
+        plusPlusResponse = plusPlusBot.increment(
+            message, partyLine.getName(), target, reason);
+      } else {
+        plusPlusResponse = plusPlusBot.decrement(
+            message, partyLine.getName(), target, reason);
+      }
+      
+      // broadcast whatever they just said
+      broadcast(subscriber, partyLine, message);
+      
+      if (plusPlusResponse != null) {
+        // TODO(dolapo): share this. ak is rushing meee! who knows if this works?
+        User plusPlus = User.get("plusplusbot", "bot");
+        Subscriber botSubscriber = Subscriber.get(plusPlus, "");
+        output =
+          broadcast(botSubscriber, partyLine, plusPlusResponse.getContent(), true);
+      }
+      
+    } else {
       // must be broadcasting
       if (partyLine != null)
         output = broadcast(subscriber, partyLine, message);
@@ -232,24 +235,30 @@ public class PartyBot extends AbstractBot {
     matcher = SCORE_RX.matcher(command);
     if (matcher.matches()) {
       PartyLine partyLine = lineManager.getPartyLine(subscriber);
-        if (partyLine == null)
-            return LineManager.NOT_IN;
+      if (partyLine == null)
+          return LineManager.NOT_IN;
       return printScore(partyLine.getName(), matcher.group(2));
     }
     
+    matcher = ME_RX.matcher(command);
+    if (matcher.matches()) {
+      PartyLine partyLine = lineManager.getPartyLine(subscriber);
+      if (partyLine == null)
+        return LineManager.NOT_IN;
+      String actionCast = "_" + subscriber.getAlias() + " " + matcher.group(2) + "_";
+      broadcast(subscriber, partyLine, actionCast, true);
+      return actionCast;
+    }
     return unknownCommand(command);
   }
   
   /** @return message you want sent back to the broadcaster/subscriber */
   String broadcast(Subscriber subscriber, PartyLine partyLine, 
-      Message message, boolean isSystem) {
-    String content;
-    if (isSystem)
-      content = message.getContent();
-    else
+      String content, boolean isSystem) {
+    if (!isSystem)
       content = String.format(MESSAGE_FORMAT, 
                          subscriber.getDisplayName(),
-                         message.getContent());
+                         content);
     
     for (Subscriber listener : partyLine.getSubscribers()) {
       if (! listener.equals(subscriber)) {
@@ -264,7 +273,7 @@ public class PartyBot extends AbstractBot {
   }
   
   String broadcast(Subscriber subscriber, PartyLine partyLine, Message message) {
-    return broadcast(subscriber, partyLine, message, false);
+    return broadcast(subscriber, partyLine, message.getContent(), false);
   }
 
   private String getStatus(Subscriber sub) {
