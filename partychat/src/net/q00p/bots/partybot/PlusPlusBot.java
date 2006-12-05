@@ -157,6 +157,7 @@ public class PlusPlusBot {
     }
     logFile.write(increment ? "+" : "-");
     logFile.newLine();
+    logFile.flush();
   }
 
   private Message getResponseMessage(String target, String reason,
