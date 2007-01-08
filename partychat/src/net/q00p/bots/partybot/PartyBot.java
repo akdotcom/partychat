@@ -70,7 +70,7 @@ public class PartyBot extends AbstractBot {
   private static final Pattern STATUS_RX = 
     Pattern.compile("(status)(\\s+\\S+)*");
   private static final Pattern SCORE_RX =
-       Pattern.compile("(score)\\s*(.*)");
+       Pattern.compile("(score)\\p{Blank}\\s*(.*)");
   private static final Pattern ME_RX =
     Pattern.compile("(me)\\s+(.*)");
   private static final Pattern LIST_RX = 
