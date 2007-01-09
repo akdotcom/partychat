@@ -60,6 +60,11 @@ public class PartyBot extends AbstractBot {
   static final String ALIAS_REMOVED = "alias removed";
   static final String ALIAS_TAKEN = "alias %s is already taken, " +
       "try a different alias";
+  static final String SUB_JOINED = "%s joined the chat";
+  static final String SUB_LEFT = "%s left the chat";
+  static final String SUB_ALIAS_CHANGE = "%s is now known as %s";
+  static final String SUB_ALIAS_CHANGE_HAD_PREVIOUS = 
+	  "%s (%s) is now known as %s";
   
   private static final Pattern CREATE_RX = 
     Pattern.compile("(make|create|start)\\s+#?(\\S*)\\s*(\\S*)", 
@@ -177,8 +182,17 @@ public class PartyBot extends AbstractBot {
     
     matcher = SUBSCRIBE_RX.matcher(command);    
     if (matcher.matches()) {
-      return lineManager.subscribe(subscriber, matcher.group(2), 
+      String announcement = String.format(
+    		  SUB_JOINED, subscriber.getUser().getName());
+      
+
+      String userResponse = lineManager.subscribe(subscriber, matcher.group(2), 
                     matcher.group(3));
+      PartyLine partyLine = lineManager.getPartyLine(subscriber);
+      
+      announce(partyLine, announcement);
+      
+      return userResponse;
     }
 
     matcher = STATUS_RX.matcher(command);   
@@ -207,18 +221,42 @@ public class PartyBot extends AbstractBot {
         if (alias.equals(sub.getAlias()))
           return String.format(ALIAS_TAKEN, alias);
       }
+      
+      String aliasResponse;
+      String oldAlias = subscriber.getAlias();
       if (alias.equals("")) {
         subscriber.setAlias(null);
-        return ALIAS_REMOVED;
+        aliasResponse = ALIAS_REMOVED;
       } else {
         subscriber.setAlias(alias);
-        return String.format(ALIAS_SET, alias);
+        aliasResponse = String.format(ALIAS_SET, alias);
       }
+      
+      String announcement;
+      if (oldAlias == null) {
+        announcement = String.format(
+            SUB_ALIAS_CHANGE, subscriber.getUser().getName(), alias);
+      } else {
+        announcement = String.format(
+            SUB_ALIAS_CHANGE_HAD_PREVIOUS, subscriber.getUser().getName(),
+            oldAlias, alias);
+      }
+
+      announce(partyLine, announcement);
+      
+      return aliasResponse;
     }
 
     matcher = UNSUBSCRIBE_RX.matcher(command);
     if (matcher.matches()) {
       Subscriber.forget(subscriber);
+      String announcement = String.format(
+          SUB_LEFT, subscriber.getUser().getName());
+      PartyLine partyLine = lineManager.getPartyLine(subscriber);
+      
+      if (partyLine != null) {
+        announce(partyLine, announcement);
+      }
       return lineManager.unsubscribe(subscriber, matcher.group(2));
     }
         
@@ -252,7 +290,10 @@ public class PartyBot extends AbstractBot {
     return unknownCommand(command);
   }
   
-  /** @return message you want sent back to the broadcaster/subscriber */
+  /** 
+   * subscriber - can be null.
+   * @return message you want sent back to the broadcaster/subscriber 
+   * */
   String broadcast(Subscriber subscriber, PartyLine partyLine, 
       String content, boolean isSystem) {
     if (!isSystem)
@@ -274,6 +315,21 @@ public class PartyBot extends AbstractBot {
   
   String broadcast(Subscriber subscriber, PartyLine partyLine, Message message) {
     return broadcast(subscriber, partyLine, message.getContent(), false);
+  }
+  
+  /**
+   * Sends a message from the system.
+   * 
+   * @param partyLine
+   * @param message
+   * @return
+   */
+  String announce(PartyLine partyLine, String message) {
+    if (partyLine == null) {
+      // Do nothing if there's somehow no partyline
+      return null;
+    }
+    return broadcast(null, partyLine, message, true);
   }
 
   private String getStatus(Subscriber sub) {
