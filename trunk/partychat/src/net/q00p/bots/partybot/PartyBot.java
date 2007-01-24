@@ -7,15 +7,19 @@ import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import net.q00p.bots.Bot;
 import net.q00p.bots.Message;
@@ -65,6 +69,7 @@ public class PartyBot extends AbstractBot {
   static final String SUB_ALIAS_CHANGE = "%s is now known as %s";
   static final String SUB_ALIAS_CHANGE_HAD_PREVIOUS = 
 	  "%s (%s) is now known as %s";
+  static final String NO_SUBSCRIBER = "No such alias or name: %s";
   
   private static final Pattern CREATE_RX = 
     Pattern.compile("(make|create|start)\\s+#?(\\S*)\\s*(\\S*)", 
@@ -82,6 +87,8 @@ public class PartyBot extends AbstractBot {
     Pattern.compile("(list|members)(\\s+\\S+)*");
   private static final Pattern ALIAS_RX = 
     Pattern.compile("(alias|aka)\\s*(\\S*)");
+  private static final Pattern WHOIS_RX =
+    Pattern.compile("(whois|describe)\\s+(\\S*)");
   private static final Pattern UNSUBSCRIBE_RX = 
     Pattern.compile("(unsub|unsubscribe|leave|exit)\\s*#?(\\S*)", 
         Pattern.CASE_INSENSITIVE);
@@ -98,6 +105,9 @@ public class PartyBot extends AbstractBot {
     Pattern.compile("/(.*)");
   private static final Pattern PLUSPLUS_RX =
     Pattern.compile("(\\S+)(\\+\\+|\\-\\-)\\W*(\\w*.*)");
+  
+  private static final Pattern SR_RX =
+    Pattern.compile("s/(\\S+)/(\\S+)/(g?)");
 
 
   private PartyBot(String name) {
@@ -123,6 +133,7 @@ public class PartyBot extends AbstractBot {
     String content = message.getPlainContent();
     Matcher commandMatcher = COMMAND_RX.matcher(content);
     Matcher plusPlusMatcher = PLUSPLUS_RX.matcher(content);
+    Matcher replaceMatcher = SR_RX.matcher(content);
     if (commandMatcher.matches()) {
       output = doCommand(subscriber, commandMatcher.group(1));
     } else if (plusPlusMatcher.find()) {
@@ -151,16 +162,76 @@ public class PartyBot extends AbstractBot {
           broadcast(botSubscriber, partyLine, plusPlusResponse.getContent(), true);
       }
       
+    } else if (replaceMatcher.find()) {
+      broadcast(subscriber, partyLine, message);
+      String replAnnouncement = attemptSearchReplace(
+          subscriber, replaceMatcher.group(1), replaceMatcher.group(2),
+          content.endsWith("g"));
+      if (replAnnouncement != null) {
+        announce(partyLine, replAnnouncement);
+      } else {
+        // This may not be the right thing to do here.
+        output = "Malformed search replace. Try s/old/new/";
+      }
     } else {
       // must be broadcasting
-      if (partyLine != null)
+      if (partyLine != null) {
         output = broadcast(subscriber, partyLine, message);
-      else
+        subscriber.setLastActivityTime(System.currentTimeMillis());
+        subscriber.addMessageToHistory(message);
+      } else {
         output = NEED_HELP;
+      }
     }
     
     if (output != null) 
       getMessageSender().sendMessage(message.reply(output));
+  }
+  
+  /**
+   * Looks back 2 items in the user's history for any message containing 'search'.
+   * If found replaces it with 'replace' and returns the new message.
+   */
+  private String attemptSearchReplace(Subscriber subscriber, 
+                                      String search, String replace, boolean global) {
+    if (subscriber == null) {
+      return null;
+    }
+    
+    Pattern searchPattern;
+    
+    try {
+      searchPattern = Pattern.compile(search);
+    } catch (PatternSyntaxException e) {
+      // Don't let the user put in crappy patterns. 
+      // TODO(dolapo): Also, we should probably let them know they did something wrong.
+      return null;
+    }
+    
+    List<SubscriberHistory.HistoryItem> history = subscriber.getHistoryItems();
+    int historySize = history.size();
+    
+    String intent = null;
+    for (int i = historySize - 1; i >= 0 && i > historySize - 3; --i) {
+      Matcher searchMatcher = searchPattern.matcher(
+          history.get(i).getMessage().getContent());
+      if (searchMatcher.find()) {
+        // Handle /g correctly.
+        if (global) {
+          intent = searchMatcher.replaceAll(replace);
+        } else {
+          intent = searchMatcher.replaceFirst(replace);
+        }
+      }
+    }
+    if (intent == null) {
+      return null;
+    }
+    
+    String name = subscriber.getAlias() != null ? subscriber.getAlias()
+        : subscriber.getUser().getName();
+    
+    return name + " probably meant to say: _" + intent + "_";
   }
   
   private String doCommand(Subscriber subscriber, String command) {
@@ -287,6 +358,27 @@ public class PartyBot extends AbstractBot {
       broadcast(subscriber, partyLine, actionCast, true);
       return actionCast;
     }
+    
+    matcher = WHOIS_RX.matcher(command);
+    if (matcher.matches()) {
+      // Hey wouldn't it be cool if we could separate commands based on what
+      // they need - like being in an active line? nah, copy/paste is much more
+      // fun.
+      PartyLine partyLine = lineManager.getPartyLine(subscriber);
+      if (partyLine == null)
+        return LineManager.NOT_IN;
+      
+      // Find a subscriber with that alias or "name".
+      String alias = matcher.group(2);
+      for (Subscriber sub : partyLine.getSubscribers()) {
+        if (alias.equals(sub.getAlias()) || alias.equals(sub.getUser().getName())) {
+          return formatSubscriberInfo(sub);
+        }
+      }
+      // Sorry, no such subscriber.
+      return String.format(NO_SUBSCRIBER, alias);
+    }
+    
     return unknownCommand(command);
   }
   
@@ -363,10 +455,48 @@ public class PartyBot extends AbstractBot {
     }
     return sb.toString();
   }
-    
-    private String printScore(String chat, String regex) {
-      return plusPlusBot.getScores(chat, regex);
+  
+  /**
+   * Returns a message like:
+   * joe@gmail.com (joe)
+   * joined chat @ [time] 
+   * last seen @ [time]
+   * total messages [num]
+   * total words [num]
+   * 
+   */
+  private String formatSubscriberInfo(Subscriber subscriber) {
+    StringBuffer sb = new StringBuffer();
+    sb.append(subscriber.getUser().getName());
+    if (subscriber.getAlias() != null) {
+      sb.append(" (").append(subscriber.getAlias()).append(")");
     }
+    
+    DateFormat df = new SimpleDateFormat("MMM dd HH:mm:ss z");
+    
+    if (subscriber.getLineJoinTime() > 0) {
+      sb.append("\nJoined chat @ ").append(df.format(
+          new Date(subscriber.getLineJoinTime())));
+    }
+    
+    if (subscriber.getLastActivityTime() > 0) {
+      sb.append("\nLast seen @ ").append(df.format(
+          new Date(subscriber.getLastActivityTime())));
+    }
+    
+    if (subscriber.getHistory().getTotalMessageCount() > 0) {
+      sb.append("\nTotal messages: ").append(subscriber.getHistory().getTotalMessageCount());
+    }
+    
+    if (subscriber.getHistory().getTotalWordCount() > 0) {
+      sb.append("\nApproximate words: ").append(subscriber.getHistory().getTotalWordCount());
+    }
+    return sb.toString();
+  }
+    
+  private String printScore(String chat, String regex) {
+    return plusPlusBot.getScores(chat, regex);
+  }
   
   private String getCommands() {
     return String.format("PartyChat commands: \n\n" +

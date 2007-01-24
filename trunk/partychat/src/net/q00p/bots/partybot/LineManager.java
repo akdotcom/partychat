@@ -87,6 +87,12 @@ public class LineManager implements Serializable {
 		synchronized(linesBySubscriber) {
 			linesBySubscriber.put(subscriber, line);
 		}
+    
+    // Note, subscribe can be called on a state reset so we only set line join
+    // time if the current time is not 0.
+    if (subscriber.getLineJoinTime() == 0) {
+      subscriber.setLineJoinTime(System.currentTimeMillis());
+    }
 		return String.format(NOW_IN, lineName);
 	}
 
@@ -105,6 +111,7 @@ public class LineManager implements Serializable {
 					line.removeSubscriber(subscriber);
 					if (line.isEmpty())
 						linesByName.remove(line.getName());
+          subscriber.setLineJoinTime(0);
 					return String.format(NOW_LEFT, line.getName());
 				}
 			}
