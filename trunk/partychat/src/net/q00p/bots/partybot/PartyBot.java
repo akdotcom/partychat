@@ -108,7 +108,7 @@ public class PartyBot extends AbstractBot {
     Pattern.compile("(\\S+)(\\+\\+|\\-\\-)\\W*(\\w*.*)");
   
   private static final Pattern SR_RX =
-    Pattern.compile("s/(\\S+)/(\\S+)/(g?)");
+    Pattern.compile("^s/([^/]+)/([^/]*)/(g?)$");
 
 
   private PartyBot(String name) {
@@ -228,11 +228,8 @@ public class PartyBot extends AbstractBot {
     if (intent == null) {
       return null;
     }
-    
-    String name = subscriber.getAlias() != null ? subscriber.getAlias()
-        : subscriber.getUser().getName();
-    
-    return name + " probably meant to say: _" + intent + "_";
+        
+    return String.format(SR_OUTPUT, subscriber.getDisplayName(), intent);
   }
   
   private String doCommand(Subscriber subscriber, String command) {
