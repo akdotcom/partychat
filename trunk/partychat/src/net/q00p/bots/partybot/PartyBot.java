@@ -70,6 +70,7 @@ public class PartyBot extends AbstractBot {
   static final String SUB_ALIAS_CHANGE_HAD_PREVIOUS = 
 	  "%s (%s) is now known as %s";
   static final String NO_SUBSCRIBER = "No such alias or name: %s";
+  static final String SR_OUTPUT = "%s meant _%s_";
   
   private static final Pattern CREATE_RX = 
     Pattern.compile("(make|create|start)\\s+#?(\\S*)\\s*(\\S*)", 
