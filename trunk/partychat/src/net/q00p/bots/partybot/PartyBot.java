@@ -46,6 +46,8 @@ public class PartyBot extends AbstractBot {
   public static String COMMANDS = "/commands";
   
   static final String MESSAGE_FORMAT = "[%s] %s";
+  static final String PRIVATE_MESSAGE_FORMAT = "[%s to just you] %s";
+  static final String IGNORE_MESSAGE_FORMAT = "[%s to all but %s] %s";
   
   static final String HELP_PROMPT = "to enter a party chat, type " +
       "'%s chat_name [password]' (password may not be required)\n" +
@@ -89,6 +91,8 @@ public class PartyBot extends AbstractBot {
     Pattern.compile("(alias|aka)\\s*(\\S*)");
   private static final Pattern WHOIS_RX =
     Pattern.compile("(whois|describe)\\s+(\\S*)");
+  private static final Pattern WHISPER_RX =
+    Pattern.compile("(whisper|msg)\\s+(\\S*)\\s+(\\S.*)");
   private static final Pattern UNSUBSCRIBE_RX = 
     Pattern.compile("(unsub|unsubscribe|leave|exit)\\s*#?(\\S*)", 
         Pattern.CASE_INSENSITIVE);
@@ -367,16 +371,57 @@ public class PartyBot extends AbstractBot {
       
       // Find a subscriber with that alias or "name".
       String alias = matcher.group(2);
-      for (Subscriber sub : partyLine.getSubscribers()) {
-        if (alias.equals(sub.getAlias()) || alias.equals(sub.getUser().getName())) {
-          return formatSubscriberInfo(sub);
-        }
+      Subscriber sub = findSubscriber(partyLine, alias);
+      if (sub != null) {
+        return formatSubscriberInfo(sub);
       }
       // Sorry, no such subscriber.
       return String.format(NO_SUBSCRIBER, alias);
     }
     
+    matcher = WHISPER_RX.matcher(command);
+    if (matcher.matches()) {
+      PartyLine partyLine = lineManager.getPartyLine(subscriber);
+      if (partyLine == null)
+        return LineManager.NOT_IN;
+      
+      String alias = matcher.group(2);
+      String msg = matcher.group(3);
+      String formattedMsg = String.format(PRIVATE_MESSAGE_FORMAT, 
+          subscriber.getDisplayName(),
+          msg);
+      
+      // It makes it easier for testing to not check if they're whispering to
+      // themself.
+      Subscriber to = findSubscriber(partyLine, alias);
+      
+      Message whispermsg = new Message(
+          User.get(to.getBotScreenName(), botName()), 
+          to.getUser(), formattedMsg);
+      getMessageSender().sendMessage(whispermsg);
+      
+      return null;
+    }
+    
     return unknownCommand(command);
+  }
+  
+  /**
+   * Finds a subscriber with the given alias or name.
+   * 
+   * @param partyLine
+   * @param aliasOrName
+   * @return The Subscriber or null.
+   */
+  Subscriber findSubscriber(PartyLine partyLine, String aliasOrName) {
+    for (Subscriber sub : partyLine.getSubscribers()) {
+      if (aliasOrName.equals(sub.getAlias()) ||
+          aliasOrName.equals(sub.getUser().getName())) {
+        return sub;
+      }
+    }
+    
+    return null;
   }
   
   /** 
