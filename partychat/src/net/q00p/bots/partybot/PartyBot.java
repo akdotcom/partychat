@@ -394,6 +394,9 @@ public class PartyBot extends AbstractBot {
       // It makes it easier for testing to not check if they're whispering to
       // themself.
       Subscriber to = findSubscriber(partyLine, alias);
+      if (to == null) {
+        return String.format(NO_SUBSCRIBER, alias);
+      }
       
       Message whispermsg = new Message(
           User.get(to.getBotScreenName(), botName()), 
