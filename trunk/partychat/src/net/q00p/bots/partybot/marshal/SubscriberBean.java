@@ -11,6 +11,7 @@ public class SubscriberBean implements Serializable {
 	String alias = null;
   long lastActivityTime;
   long lineJoinTime;
+  long snoozeUntil;
   int totalWordCount;
   int totalMessageCount;
 	
@@ -28,6 +29,8 @@ public class SubscriberBean implements Serializable {
   public void setLineJoinTime(long t) { lineJoinTime = t; }
   public void setTotalWordCount(int i) { totalWordCount = i; }
   public void setTotalMessageCount(int i) { totalMessageCount = i; }
+  public void setSnoozeUntil(long t) { snoozeUntil = t; }
+  public long getSnoozeUntil() { return snoozeUntil; }
 	
 	public Subscriber loadSubscriber() {
 		Subscriber sub = Subscriber.get(User.get(userName), botScreenName);
@@ -35,6 +38,7 @@ public class SubscriberBean implements Serializable {
     sub.setLastActivityTime(lastActivityTime);
     sub.setLineJoinTime(lineJoinTime);
     sub.resetHistory(totalWordCount, totalMessageCount);
+    sub.setSnoozeUntil(snoozeUntil);
 		return sub;
 	}
 	
@@ -46,6 +50,7 @@ public class SubscriberBean implements Serializable {
     lineJoinTime = sub.getLineJoinTime();
     totalWordCount = sub.getHistory().getTotalWordCount();
     totalMessageCount = sub.getHistory().getTotalMessageCount();
+    snoozeUntil = sub.getSnoozeUntil();
 	}
 	
 	public SubscriberBean() {};

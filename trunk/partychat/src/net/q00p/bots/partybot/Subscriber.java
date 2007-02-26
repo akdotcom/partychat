@@ -24,6 +24,7 @@ public class Subscriber implements Serializable {
   private String alias = null;
   private long lastActivityTime;
   private long lineJoinTime;
+  private long snoozeUntil;
   
   private static final int MAX_HISTORY = 10;
   private SubscriberHistory history = new SubscriberHistory(MAX_HISTORY);
@@ -81,6 +82,18 @@ public class Subscriber implements Serializable {
   
   public long getLineJoinTime() {
     return lineJoinTime;
+  }
+  
+  public void setSnoozeUntil(long ms) {
+    snoozeUntil = ms;
+  }
+  
+  public long getSnoozeUntil() {
+    return snoozeUntil;
+  }
+  
+  public boolean isSnoozing() {
+    return System.currentTimeMillis() < snoozeUntil;
   }
   
   public String getDisplayName() {
