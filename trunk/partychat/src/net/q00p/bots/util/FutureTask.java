@@ -21,7 +21,7 @@ import java.util.TreeMap;
  * We can't guarantee any execution smaller than RESOLUTION.
  *
  * Created on Feb 25, 2007
- * @author <a href="mailto:dolapo@gmail.com">Dolapo Falola</a>
+ * @author dolapo
  */
 public class FutureTask {
   
