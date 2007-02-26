@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +28,8 @@ import net.q00p.bots.io.Logger;
 import net.q00p.bots.partybot.marshal.PartyLineBean;
 import net.q00p.bots.partybot.marshal.SubscriberBean;
 import net.q00p.bots.util.AbstractBot;
+import net.q00p.bots.util.DateUtil;
+import net.q00p.bots.util.FutureTask;
 
 
 public class PartyBot extends AbstractBot {
@@ -73,6 +76,14 @@ public class PartyBot extends AbstractBot {
   static final String NO_SUBSCRIBER = "No such alias or name: %s";
   static final String SR_OUTPUT = "%s meant _%s_";
   
+  static final String USER_NO_LONGER_SNOOZING = "%s is no longer snoozing";
+  static final String NOT_CURRENTLY_SNOOZING = 
+    "You are not currently snoozing. To start snoozing, try /snooze 10m";
+  static final String SNOOZE_INCORRECT_TIME = 
+    "The snooze time you specified could not be parsed.";
+  static final String USER_SNOOZING = "%s is now snoozing";
+  static final String SNOOZE_SEE_YOU_IN = "ok, see you in %s";
+  
   private static final Pattern CREATE_RX = 
     Pattern.compile("(make|create|start)\\s+#?(\\S*)\\s*(\\S*)", 
         Pattern.CASE_INSENSITIVE);
@@ -87,6 +98,8 @@ public class PartyBot extends AbstractBot {
     Pattern.compile("(me)\\s+(.*)");
   private static final Pattern LIST_RX = 
     Pattern.compile("(list|members)(\\s+\\S+)*");
+  private static final Pattern SNOOZE_RX =
+    Pattern.compile("(snooze)\\s*(.*)");
   private static final Pattern ALIAS_RX = 
     Pattern.compile("(alias|aka)\\s*(\\S*)");
   private static final Pattern WHOIS_RX =
@@ -113,6 +126,7 @@ public class PartyBot extends AbstractBot {
   private static final Pattern SR_RX =
     Pattern.compile("^s/([^/]+)/([^/]*)/(g?)$");
 
+  private final FutureTask futureTask = new FutureTask();
 
   private PartyBot(String name) {
     super(name);
@@ -133,6 +147,8 @@ public class PartyBot extends AbstractBot {
     
     String output = null;
     PartyLine partyLine = lineManager.getPartyLine(subscriber);
+    
+    boolean isCommand = false;
 
     String content = message.getPlainContent();
     Matcher commandMatcher = COMMAND_RX.matcher(content);
@@ -140,6 +156,7 @@ public class PartyBot extends AbstractBot {
     Matcher replaceMatcher = SR_RX.matcher(content);
     if (commandMatcher.matches()) {
       output = doCommand(subscriber, commandMatcher.group(1));
+      isCommand = true;
     } else if (plusPlusMatcher.find()) {
       String target = plusPlusMatcher.group(1);
       String delta = plusPlusMatcher.group(2);
@@ -186,6 +203,13 @@ public class PartyBot extends AbstractBot {
       } else {
         output = NEED_HELP;
       }
+    }
+    
+    // If it wasn't a command and they were snoozing, bring em back.
+    if (subscriber.isSnoozing() && !isCommand && partyLine != null) {
+      subscriber.setSnoozeUntil(0);
+      announce(partyLine, String.format(
+          USER_NO_LONGER_SNOOZING, subscriber.getUser().getName()));
     }
     
     if (output != null) 
@@ -235,7 +259,7 @@ public class PartyBot extends AbstractBot {
     return String.format(SR_OUTPUT, subscriber.getDisplayName(), intent);
   }
   
-  private String doCommand(Subscriber subscriber, String command) {
+  private String doCommand(final Subscriber subscriber, String command) {
 
     Matcher matcher = HELP_RX.matcher(command);
     if (matcher.matches()) {
@@ -279,6 +303,63 @@ public class PartyBot extends AbstractBot {
         return LineManager.NOT_IN;
       else
         return formatSubscriberList(partyLine);
+    }
+    
+    matcher = SNOOZE_RX.matcher(command);
+    // /snooze 10m
+    // /snooze
+    // 
+    if (matcher.matches()) {
+      final PartyLine partyLine = lineManager.getPartyLine(subscriber);
+      if (partyLine == null)
+        return LineManager.NOT_IN;
+      
+      String time = matcher.group(2);
+      
+      if (time.length() == 0 && subscriber.isSnoozing()) {
+        // They're no longer snoozing.
+        subscriber.setSnoozeUntil(0);
+        announce(partyLine, String.format(
+            USER_NO_LONGER_SNOOZING, subscriber.getUser().getName()));
+        return null;
+      } else if (time.length() == 0 && !subscriber.isSnoozing()) {
+        return NOT_CURRENTLY_SNOOZING;
+      }
+      
+      // They're not snoozing and they want to be.
+      long snoozeTime;
+      try {
+        snoozeTime = DateUtil.parseTime(time);
+      } catch (ParseException e) {
+        return SNOOZE_INCORRECT_TIME;
+      }
+      
+      // Note if they were already snoozing, this just extends or shortens it.
+      // Only announce if they weren't already snoozing.
+      if (!subscriber.isSnoozing()) {
+        announce(partyLine, String.format(
+            USER_SNOOZING, subscriber.getUser().getName()));
+      }
+      
+      long snoozeUntil = System.currentTimeMillis() + snoozeTime;
+      long oldSnoozeUntil = subscriber.isSnoozing() ? 
+          subscriber.getSnoozeUntil() : 0;
+      subscriber.setSnoozeUntil(snoozeUntil);
+      
+      // Now, make sure we announce their snooze when it's over. But we have
+      // to cancel any planned future announcements if they exist.
+      if (oldSnoozeUntil > 0) {
+        boolean removed = futureTask.removeTask(oldSnoozeUntil);
+      }
+      
+      futureTask.addTask(snoozeUntil, new Runnable() {
+        public void run() {
+          subscriber.setSnoozeUntil(0);
+          announce(partyLine, String.format(
+              USER_NO_LONGER_SNOOZING, subscriber.getUser().getName()));
+        }});
+
+      return String.format(SNOOZE_SEE_YOU_IN, time);
     }
     
     matcher = ALIAS_RX.matcher(command);
@@ -440,6 +521,11 @@ public class PartyBot extends AbstractBot {
     
     for (Subscriber listener : partyLine.getSubscribers()) {
       if (! listener.equals(subscriber)) {
+        if (listener.isSnoozing()) {
+          // TODO(dolapo) - Actually save the messages. Post sqlite thing.
+          //listener.addDelayedMessage(content);
+          continue;
+        }
         Message msg = new Message(
             User.get(listener.getBotScreenName(), botName()), 
             listener.getUser(), content);
