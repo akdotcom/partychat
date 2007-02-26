@@ -11,7 +11,7 @@ import java.util.Locale;
  * Utilities for date stuff.
  *
  * Created on Feb 24, 2007
- * @author <a href="mailto:dolapo@gmail.com">Dolapo Falola</a>
+ * @author dolapo
  */
 public final class DateUtil {
   private DateUtil() {}
