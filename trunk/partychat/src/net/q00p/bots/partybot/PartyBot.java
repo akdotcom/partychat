@@ -319,8 +319,6 @@ public class PartyBot extends AbstractBot {
       if (time.length() == 0 && subscriber.isSnoozing()) {
         // They're no longer snoozing.
         subscriber.setSnoozeUntil(0);
-        announce(partyLine, String.format(
-            USER_NO_LONGER_SNOOZING, subscriber.getUser().getName()));
         return null;
       } else if (time.length() == 0 && !subscriber.isSnoozing()) {
         return NOT_CURRENTLY_SNOOZING;
@@ -334,29 +332,20 @@ public class PartyBot extends AbstractBot {
         return SNOOZE_INCORRECT_TIME;
       }
       
-      // Note if they were already snoozing, this just extends or shortens it.
-      // Only announce if they weren't already snoozing.
-      if (!subscriber.isSnoozing()) {
-        announce(partyLine, String.format(
-            USER_SNOOZING, subscriber.getUser().getName()));
-      }
-      
       long snoozeUntil = System.currentTimeMillis() + snoozeTime;
       long oldSnoozeUntil = subscriber.isSnoozing() ? 
           subscriber.getSnoozeUntil() : 0;
       subscriber.setSnoozeUntil(snoozeUntil);
       
-      // Now, make sure we announce their snooze when it's over. But we have
-      // to cancel any planned future announcements if they exist.
+      // Cancel any existing snooze settings if they exist.
       if (oldSnoozeUntil > 0) {
-        boolean removed = futureTask.removeTask(oldSnoozeUntil);
+        futureTask.removeTask(oldSnoozeUntil);
       }
-      
+
+      // Set up the new snooze.
       futureTask.addTask(snoozeUntil, new Runnable() {
         public void run() {
           subscriber.setSnoozeUntil(0);
-          announce(partyLine, String.format(
-              USER_NO_LONGER_SNOOZING, subscriber.getUser().getName()));
         }});
 
       return String.format(SNOOZE_SEE_YOU_IN, time);
@@ -582,6 +571,8 @@ public class PartyBot extends AbstractBot {
 
       if (sub.getAlias() != null)
         sb.append(" (" + sub.getAlias() + ")");
+      if (sub.isSnoozing())
+        sb.append(" snoozing for " + timeTill(sub.getSnoozeUntil()));
       sb.append("\n");
     }
     return sb.toString();
@@ -594,6 +585,7 @@ public class PartyBot extends AbstractBot {
    * last seen @ [time]
    * total messages [num]
    * total words [num]
+   * snoozing for [time]
    * 
    */
   private String formatSubscriberInfo(Subscriber subscriber) {
@@ -603,16 +595,15 @@ public class PartyBot extends AbstractBot {
       sb.append(" (").append(subscriber.getAlias()).append(")");
     }
     
-    DateFormat df = new SimpleDateFormat("MMM dd HH:mm:ss z");
-    
     if (subscriber.getLineJoinTime() > 0) {
-      sb.append("\nJoined chat @ ").append(df.format(
-          new Date(subscriber.getLineJoinTime())));
+      sb.append("\nMember for ")
+        .append(timeSince(subscriber.getLineJoinTime()));
     }
     
     if (subscriber.getLastActivityTime() > 0) {
-      sb.append("\nLast seen @ ").append(df.format(
-          new Date(subscriber.getLastActivityTime())));
+      sb.append("\nLast seen ")
+        .append(timeSince(subscriber.getLastActivityTime()))
+        .append(" ago");
     }
     
     if (subscriber.getHistory().getTotalMessageCount() > 0) {
@@ -622,7 +613,22 @@ public class PartyBot extends AbstractBot {
     if (subscriber.getHistory().getTotalWordCount() > 0) {
       sb.append("\nApproximate words: ").append(subscriber.getHistory().getTotalWordCount());
     }
+    
+    if (subscriber.isSnoozing()) {
+      sb.append("\nSnoozing for " + timeTill(subscriber.getSnoozeUntil()) );
+    }
     return sb.toString();
+  }
+
+  /** Prints how long till the given time */
+  private static String timeTill(long futureTimeMs) {
+    return DateUtil.prettyFormatTime(
+        futureTimeMs - System.currentTimeMillis());
+  }
+  
+  private static String timeSince(long pastTimeMs) {
+    return DateUtil.prettyFormatTime(
+        System.currentTimeMillis() - pastTimeMs);
   }
     
   private String printScore(String chat, String regex) {

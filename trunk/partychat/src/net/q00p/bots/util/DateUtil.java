@@ -16,6 +16,36 @@ import java.util.Locale;
 public final class DateUtil {
   private DateUtil() {}
   
+  enum TimeUnit {
+    SECOND("s", 1000),
+    MINUTE("m", 60 * SECOND.getMs()),
+    HOUR("h", 60 * MINUTE.getMs()),
+    DAY("d", 24 * HOUR.getMs());
+    
+    private final String abbreviation;
+    private final long ms;
+    TimeUnit(String abbreviation, long ms) {
+      this.abbreviation = abbreviation;
+      this.ms = ms;
+    }
+    String getAbbreviation() {
+      return abbreviation;
+    }
+    long getMs() {
+      return ms;
+    }
+  }
+
+  /** The {@link TimeUnit}s, but in reversed order (DAY -> SECOND) */
+  final static TimeUnit[] REVERSED_TIME_UNITS = new TimeUnit[TimeUnit.values().length];
+  static {
+    int i = TimeUnit.values().length;
+    for (TimeUnit unit : TimeUnit.values()) {
+      REVERSED_TIME_UNITS[--i] = unit;
+    }
+  }
+    
+  
   /**
    * Tries to return milliseconds from a user entered string like 10m or 10s or
    * 10h or just 10. A bare number is interpreted as seconds.
@@ -36,23 +66,23 @@ public final class DateUtil {
       throw new ParseException("Invalid input string", 0);
     }
     
-    String unit = text.substring(position.getIndex());
+    int unitIndex = position.getIndex();
+    String unitString = text.substring(unitIndex);
+    TimeUnit timeUnit;
     
-    int multiplier = 60*1000;
-    
-    if ("d".equals(unit)) {
-      multiplier *= 60 * 24;
-    } else if ("h".equals(unit)) {
-      multiplier *= 60;
-    } else if ("s".equals(unit)) {
-      multiplier /= 60;
-    } else if ("m".equals(unit) || unit.length() == 0) {
-      // bleh
+    if (unitString == null || unitString.trim().equals("")) {
+      // If no unit specified, default to minutes.
+      timeUnit = TimeUnit.MINUTE;
     } else {
-      throw new ParseException("Invalid input string", position.getIndex());
+      // Try to parse the unit.
+      try {
+        timeUnit = getTimeUnit(unitString);
+      } catch (IllegalArgumentException e) {
+        throw new ParseException(e.getMessage(), unitIndex);
+      }
     }
     
-    long result = number.longValue() * multiplier;
+    long result = number.longValue() * timeUnit.getMs();
     if (result < 0) {
       // Oops overflow.
       throw new ParseException("Time period too large", 0); 
@@ -61,24 +91,42 @@ public final class DateUtil {
     return result;
   }
   
+  private static TimeUnit getTimeUnit(String abbreviation) {
+    for (TimeUnit timeUnit : TimeUnit.values()) {
+      if (timeUnit.getAbbreviation().equalsIgnoreCase(abbreviation))
+        return timeUnit;
+    }
+    throw new IllegalArgumentException(
+        abbreviation + " is not a valid time unit abbreviation");
+  }
+  
   // Throws an exception if the parse doesn't match expected.
-  // expected = -1 if we except an exception.
+  // expected = -1 if we expect an exception.
   private static void checkParse(String s, long expected) throws Exception {
-    boolean exceptionCaught = false;
+    ParseException caughtException = null;
     long value = 0;
     
     try {
       value = parseTime(s);
     } catch (ParseException e) {
-      exceptionCaught = true;
+      caughtException = e;
     }
     
-    if ((expected == -1 && !exceptionCaught) ||
+    if ((expected == -1 && caughtException == null) ||
         (expected != -1 && expected != value)) {
       throw new Exception("Parse broken for " + s + ", expected " + 
-                          expected + " but got: " + value);
+                          expected + " but got: " + value, caughtException);
     }
     
+  }
+  
+  private static void checkPretty(long ms, String expected) throws Exception {
+    String actual = prettyFormatTime(ms);
+    if (!actual.equals(expected)) {
+      throw new Exception(String.format(
+          "Preffy format broken for " +
+          "%d; expected: %s, actual: %s", ms, expected, actual) );
+    }
   }
   
   /**
@@ -89,9 +137,24 @@ public final class DateUtil {
    * @return
    */
   public static String prettyFormatTime(long ms) {
-    throw new UnsupportedOperationException("dolapo=lazy");
+    StringBuilder sb = new StringBuilder();
+    if (ms < 0) {
+      sb.append("negative ");
+      ms = Math.abs(ms);
+    }
+    
+    // Step through the time units, from largest to smallest.
+    for (TimeUnit timeUnit : REVERSED_TIME_UNITS) {
+      long numUnits = ms / timeUnit.getMs();
+      if (numUnits != 0) {
+        if (sb.length() > 0) sb.append(" ");
+        sb.append(numUnits + timeUnit.getAbbreviation());
+        // Get the remainder milliseconds
+        ms %= timeUnit.getMs();
+      }
+    }
+    return sb.toString();
   }
-  
   
   // In lieu of unit tests...
   public static void main(String[] args) throws Exception {
@@ -107,8 +170,14 @@ public final class DateUtil {
     checkParse("10mmmm",  -1);
     checkParse("10hours", -1);
     
-    
     checkParse("99999999999999999999d", -1);
+    
+    
+    // Test prettyFormatTime
+    checkPretty(5*1000, "5s");
+    checkPretty(2*24*60*60*1000 + 5*1000, "2d 5s");
+    checkPretty(2*24*60*60*1000 + 12*60*60*1000 + 5*1000, "2d 12h 5s");
+    
     System.out.println("Tests passed");
   }
 }
