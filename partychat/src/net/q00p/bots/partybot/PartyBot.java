@@ -43,6 +43,7 @@ public class PartyBot extends AbstractBot {
   public static String LIST = "/list";
   public static String ALIAS = "/alias";
   public static String SCORE = "/score";
+  public static String REASONS = "/reasons";
   public static String EXIT = "/exit";
   public static String HELP = "/help";
   public static String CREATE = "/make";
@@ -93,7 +94,7 @@ public class PartyBot extends AbstractBot {
   private static final Pattern STATUS_RX = 
     Pattern.compile("(status)(\\s+\\S+)*");
   private static final Pattern SCORE_RX =
-       Pattern.compile("(score)\\s+(.*)");
+       Pattern.compile("(score|reasons)(\\s+)?(.*)");
   private static final Pattern ME_RX =
     Pattern.compile("(me)\\s+(.*)");
   private static final Pattern LIST_RX = 
@@ -415,9 +416,14 @@ public class PartyBot extends AbstractBot {
     matcher = SCORE_RX.matcher(command);
     if (matcher.matches()) {
       PartyLine partyLine = lineManager.getPartyLine(subscriber);
-      if (partyLine == null)
-          return LineManager.NOT_IN;
-      return printScore(partyLine.getName(), matcher.group(2));
+      if (partyLine == null) return LineManager.NOT_IN;
+      String commandName = matcher.group(1);
+      String regex = matcher.group(3);
+      
+      return printScore(
+          partyLine.getName(), 
+          regex,
+          commandName.equals("reasons"));
     }
     
     matcher = ME_RX.matcher(command);
@@ -631,8 +637,8 @@ public class PartyBot extends AbstractBot {
         System.currentTimeMillis() - pastTimeMs);
   }
     
-  private String printScore(String chat, String regex) {
-    return plusPlusBot.getScores(chat, regex);
+  private String printScore(String chat, String regex, boolean showReasons) {
+    return plusPlusBot.getScores(chat, regex, showReasons);
   }
   
   private String getCommands() {
@@ -650,8 +656,12 @@ public class PartyBot extends AbstractBot {
         
         "%s [name] - give yourself an alias; if you do not specify a name," +
         " your current alias is removed.\n\n" +
-                
-                 "%s [name] - return the score for a given name.\n\n" +
+
+        "%s [name] - return the score for a given name (may also be a regular " +
+        "expression).\n\n" +
+
+        "%s [name] - similar to /score, except it also returns the reasons " +
+        " for increments/decrements.\n\n" +
 
         "%s - leave the party chat you are currently in.\n\n" +
         
@@ -659,7 +669,8 @@ public class PartyBot extends AbstractBot {
         "directs users to '" + COMMANDS + "'.\n\n" +
         
         "%s - displays this menu", 
-                CREATE, JOIN, STATUS, LIST, ALIAS, SCORE, EXIT, HELP, COMMANDS);
+        CREATE, JOIN, STATUS, LIST, ALIAS, SCORE, REASONS, EXIT, HELP, 
+        COMMANDS);
   }
   
   private String saveState(Subscriber subscriber) {
