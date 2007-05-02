@@ -139,7 +139,7 @@ public class PartyBot extends AbstractBot {
     Runtime.getRuntime().addShutdownHook(new Thread(sh));
     
     timer = new Timer();
-    timer.schedule(sh, new Date(), 15*60*1000); // every 15 minutes.
+    timer.scheduleAtFixedRate(sh, new Date(), 15*60*1000); // every 15 minutes.
   }
   
   public void handleMessage(Message message) {
