@@ -18,12 +18,12 @@
 		<link>
 			<name>bin</name>
 			<type>2</type>
-			<location>/Users/ak/Documents/talkbots/bin</location>
+			<location>bin</location>
 		</link>
 		<link>
 			<name>src</name>
 			<type>2</type>
-			<location>/Users/ak/Documents/talkbots/src</location>
+			<location>src</location>
 		</link>
 	</linkedResources>
 </projectDescription>
