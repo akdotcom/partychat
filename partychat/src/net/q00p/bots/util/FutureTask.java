@@ -2,7 +2,6 @@
 
 package net.q00p.bots.util;
 
-import java.util.Date;
 import java.util.SortedMap;
 import java.util.Timer;
 import java.util.TimerTask;

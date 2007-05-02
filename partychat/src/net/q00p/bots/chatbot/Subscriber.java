@@ -42,6 +42,5 @@ public class Subscriber {
 	public void setUser(User user) {
 		this.user = user;
 	}
-	
-	
+
 }

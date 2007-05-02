@@ -1,11 +1,11 @@
 package net.q00p.bots.partybot.marshal;
 
+import net.q00p.bots.partybot.PartyLine;
+import net.q00p.bots.partybot.Subscriber;
+
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
-
-import net.q00p.bots.partybot.PartyLine;
-import net.q00p.bots.partybot.Subscriber;
 
 public class PartyLineBean implements Serializable {
 	private String password = null;
@@ -27,7 +27,7 @@ public class PartyLineBean implements Serializable {
 		return pl;
 	}
 	
-	public PartyLineBean() {};
+	public PartyLineBean() {}
 	
 	public PartyLineBean(PartyLine pl) {
 		name = pl.getName();

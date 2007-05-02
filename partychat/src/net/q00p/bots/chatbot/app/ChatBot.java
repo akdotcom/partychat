@@ -1,10 +1,5 @@
 package net.q00p.bots.chatbot.app;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import net.q00p.bots.Bot;
 import net.q00p.bots.Message;
 import net.q00p.bots.User;
@@ -15,10 +10,14 @@ import net.q00p.bots.chatbot.Subscriber;
 import net.q00p.bots.chatbot.SubscriberManager;
 import net.q00p.bots.chatbot.listeners.ChatListener;
 import net.q00p.bots.io.Logger;
-import net.q00p.bots.partybot.PartyBot;
 import net.q00p.bots.util.AbstractBot;
 import net.q00p.bots.util.ServiceRegistrar;
 import net.q00p.bots.util.Tuple;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ChatBot extends AbstractBot {
 	

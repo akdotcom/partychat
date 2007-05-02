@@ -1,5 +1,15 @@
 package net.q00p.bots.partybot;
 
+import net.q00p.bots.Bot;
+import net.q00p.bots.Message;
+import net.q00p.bots.User;
+import net.q00p.bots.io.Logger;
+import net.q00p.bots.partybot.marshal.PartyLineBean;
+import net.q00p.bots.partybot.marshal.SubscriberBean;
+import net.q00p.bots.util.AbstractBot;
+import net.q00p.bots.util.DateUtil;
+import net.q00p.bots.util.FutureTask;
+
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
 import java.io.BufferedInputStream;
@@ -7,9 +17,6 @@ import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -21,174 +28,103 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import net.q00p.bots.Bot;
-import net.q00p.bots.Message;
-import net.q00p.bots.User;
-import net.q00p.bots.io.Logger;
-import net.q00p.bots.partybot.marshal.PartyLineBean;
-import net.q00p.bots.partybot.marshal.SubscriberBean;
-import net.q00p.bots.util.AbstractBot;
-import net.q00p.bots.util.DateUtil;
-import net.q00p.bots.util.FutureTask;
-
 
 public class PartyBot extends AbstractBot {
   private final LineManager lineManager;
   private final Timer timer;
   private final StateSaver sh;
-    private final PlusPlusBot plusPlusBot;
+  private final PlusPlusBot plusPlusBot;
 
-  public static String JOIN = "/enter";
-  public static String STATUS = "/status";
-  public static String LIST = "/list";
-  public static String ALIAS = "/alias";
-  public static String SCORE = "/score";
-  public static String REASONS = "/reasons";
-  public static String EXIT = "/exit";
-  public static String HELP = "/help";
-  public static String CREATE = "/make";
-  public static String COMMANDS = "/commands";
-  
-  static final String MESSAGE_FORMAT = "[%s] %s";
-  static final String PRIVATE_MESSAGE_FORMAT = "[%s to just you] %s";
-  static final String IGNORE_MESSAGE_FORMAT = "[%s to all but %s] %s";
-  
-  static final String HELP_PROMPT = "to enter a party chat, type " +
-      "'%s chat_name [password]' (password may not be required)\n" +
-      "to exit a party chat, type '%s'\nfor a list of" +
-      " PartyChat commands, type '%s'";
-  static final String UKNOWN_COMMAND = "'%s' is not a recognized " +
-      "command, type '" + COMMANDS + "' for a list of possible commands " +
-          "and their uses.";
-  static final String NEED_HELP = "you are not in a party chat, for help "+
-      "using PartyChat, type '" + PartyBot.HELP + "'";
-  static final String SUB_STATUS_ONLINE = "you are currently in party chat #%s" +
-      " as %s";
-  static final String SUB_STATUS_OFFLINE = "you are not in a party chat";
-  static final String ALIAS_SET = "alias set to %s";
-  static final String ALIAS_REMOVED = "alias removed";
-  static final String ALIAS_TAKEN = "alias %s is already taken, " +
-      "try a different alias";
-  static final String SUB_JOINED = "%s joined the chat";
-  static final String SUB_LEFT = "%s left the chat";
-  static final String SUB_ALIAS_CHANGE = "%s is now known as %s";
-  static final String SUB_ALIAS_CHANGE_HAD_PREVIOUS = 
-	  "%s (%s) is now known as %s";
+  private static final Pattern PLUSPLUS_RX = Pattern
+      .compile("(\\S+)(\\+\\+|\\-\\-)\\W*(\\w*.*)");
+
+  private static final Pattern SR_RX = Pattern
+      .compile("^s/([^/]+)/([^/]*)/(g?)$");
+
   static final String NO_SUBSCRIBER = "No such alias or name: %s";
-  static final String SR_OUTPUT = "%s meant _%s_";
-  
   static final String USER_NO_LONGER_SNOOZING = "%s is no longer snoozing";
-  static final String NOT_CURRENTLY_SNOOZING = 
-    "You are not currently snoozing. To start snoozing, try /snooze 10m";
-  static final String SNOOZE_INCORRECT_TIME = 
-    "The snooze time you specified could not be parsed.";
-  static final String USER_SNOOZING = "%s is now snoozing";
-  static final String SNOOZE_SEE_YOU_IN = "ok, see you in %s";
-  
-  private static final Pattern CREATE_RX = 
-    Pattern.compile("(make|create|start)\\s+#?(\\S*)\\s*(\\S*)", 
-        Pattern.CASE_INSENSITIVE);
-  private static final Pattern SUBSCRIBE_RX = 
-    Pattern.compile("(sub|subscribe|join|enter)\\s+#?(\\S*)\\s*(\\S*)", 
-        Pattern.CASE_INSENSITIVE);
-  private static final Pattern STATUS_RX = 
-    Pattern.compile("(status)(\\s+\\S+)*");
-  private static final Pattern SCORE_RX =
-       Pattern.compile("(score|reasons)(\\s+)?(.*)");
-  private static final Pattern ME_RX =
-    Pattern.compile("(me)\\s+(.*)");
-  private static final Pattern LIST_RX = 
-    Pattern.compile("(list|members)(\\s+\\S+)*");
-  private static final Pattern SNOOZE_RX =
-    Pattern.compile("(snooze)\\s*(.*)");
-  private static final Pattern ALIAS_RX = 
-    Pattern.compile("(alias|aka)\\s*(\\S*)");
-  private static final Pattern WHOIS_RX =
-    Pattern.compile("(whois|describe)\\s+(\\S*)");
-  private static final Pattern WHISPER_RX =
-    Pattern.compile("(whisper|msg)\\s+(\\S*)\\s+(\\S.*)");
-  private static final Pattern UNSUBSCRIBE_RX = 
-    Pattern.compile("(unsub|unsubscribe|leave|exit)\\s*#?(\\S*)", 
-        Pattern.CASE_INSENSITIVE);
-  private static final Pattern HELP_RX = 
-    Pattern.compile("(\\?|help)(\\s+\\S+)*", Pattern.CASE_INSENSITIVE);
-  private static final Pattern COMMANDS_RX = 
-    Pattern.compile("(commands|actions|instructions)(\\s+\\S+)*", 
-        Pattern.CASE_INSENSITIVE);
-  private static final Pattern SAVE_RX = 
-    Pattern.compile("(save-state)(\\s+\\S+)*", 
-        Pattern.CASE_INSENSITIVE);
+  static final String MESSAGE_FORMAT = "[%s] %s";
+  static final String IGNORE_MESSAGE_FORMAT = "[%s to all but %s] %s";
 
-  private static final Pattern COMMAND_RX = 
-    Pattern.compile("/(.*)");
-  private static final Pattern PLUSPLUS_RX =
-    Pattern.compile("(\\S+)(\\+\\+|\\-\\-)\\W*(\\w*.*)");
-  
-  private static final Pattern SR_RX =
-    Pattern.compile("^s/([^/]+)/([^/]*)/(g?)$");
+  static final String UKNOWN_COMMAND = "'%s' is not a recognized "
+      + "command, type '" + Command.COMMANDS.getShortName()
+      + "' for a list of possible commands " + "and their uses.";
+  static final String NEED_HELP = "you are not in a party chat, for help "
+      + "using PartyChat, type '" + Command.HELP.getShortName() + "'";
+  static final String SUB_STATUS_ONLINE = "you are currently in party chat #%s"
+      + " as %s";
+  static final String SUB_STATUS_OFFLINE = "you are not in a party chat";
+
+  static final String SR_OUTPUT = "%s meant _%s_";
 
   private final FutureTask futureTask = new FutureTask();
 
   private PartyBot(String name) {
     super(name);
     lineManager = loadState();
-        
+
     plusPlusBot = new PlusPlusBot();
 
     sh = new StateSaver(lineManager);
     Runtime.getRuntime().addShutdownHook(new Thread(sh));
-    
+
     timer = new Timer();
-    timer.scheduleAtFixedRate(sh, new Date(), 15*60*1000); // every 15 minutes.
+    timer.scheduleAtFixedRate(sh, new Date(), 15 * 60 * 1000); // every 15
+    // minutes.
   }
-  
+
   public void handleMessage(Message message) {
-    Subscriber subscriber = 
-      Subscriber.get(message.getFrom(), message.getTo().getName());
-    
+    Subscriber subscriber = Subscriber.get(message.getFrom(), message.getTo()
+        .getName());
+
     String output = null;
     PartyLine partyLine = lineManager.getPartyLine(subscriber);
-    
+
     boolean isCommand = false;
 
     String content = message.getPlainContent();
-    Matcher commandMatcher = COMMAND_RX.matcher(content);
+    Command command = Command.isCommand(content);
     Matcher plusPlusMatcher = PLUSPLUS_RX.matcher(content);
     Matcher replaceMatcher = SR_RX.matcher(content);
-    if (commandMatcher.matches()) {
-      output = doCommand(subscriber, commandMatcher.group(1));
+    if (command != null) {
+      CommandHandler handler = command.handler;
+      Matcher commandMatcher = command.pattern.matcher(content);
+      // need to run matches() before CommandHandler can access groups()
+      boolean doesMatch = commandMatcher.matches();
+      assert doesMatch;
+      output = handler.doCommand(this, lineManager, subscriber, commandMatcher);
       isCommand = true;
     } else if (plusPlusMatcher.find()) {
       String target = plusPlusMatcher.group(1);
       String delta = plusPlusMatcher.group(2);
       String reason = plusPlusMatcher.group(3);
-      
+
       Message plusPlusResponse = null;
-      
+
       if ("++".equals(delta)) {
-        plusPlusResponse = plusPlusBot.increment(
-            message, partyLine.getName(), target, reason);
+        plusPlusResponse = plusPlusBot.increment(message, partyLine.getName(),
+            target, reason);
       } else {
-        plusPlusResponse = plusPlusBot.decrement(
-            message, partyLine.getName(), target, reason);
+        plusPlusResponse = plusPlusBot.decrement(message, partyLine.getName(),
+            target, reason);
       }
-      
+
       // broadcast whatever they just said
       broadcast(subscriber, partyLine, message);
-      
+
       if (plusPlusResponse != null) {
-        // TODO(dolapo): share this. ak is rushing meee! who knows if this works?
+        // TODO(dolapo): share this. ak is rushing meee! who knows if this
+        // works?
         User plusPlus = User.get("plusplusbot", "bot");
         Subscriber botSubscriber = Subscriber.get(plusPlus, "");
-        output =
-          broadcast(botSubscriber, partyLine, plusPlusResponse.getContent(), true);
+        output = broadcast(botSubscriber, partyLine, plusPlusResponse
+            .getContent(), true);
       }
-      
+
     } else if (replaceMatcher.find()) {
       broadcast(subscriber, partyLine, message);
-      String replAnnouncement = attemptSearchReplace(
-          subscriber, replaceMatcher.group(1), replaceMatcher.group(2),
-          content.endsWith("g"));
+      String replAnnouncement = attemptSearchReplace(subscriber, replaceMatcher
+          .group(1), replaceMatcher.group(2), content.endsWith("g"));
       if (replAnnouncement != null) {
         announce(partyLine, replAnnouncement);
       } else {
@@ -205,45 +141,45 @@ public class PartyBot extends AbstractBot {
         output = NEED_HELP;
       }
     }
-    
+
     // If it wasn't a command and they were snoozing, bring em back.
     if (subscriber.isSnoozing() && !isCommand && partyLine != null) {
       subscriber.setSnoozeUntil(0);
-      announce(partyLine, String.format(
-          USER_NO_LONGER_SNOOZING, subscriber.getUser().getName()));
+      announce(partyLine, String.format(USER_NO_LONGER_SNOOZING, subscriber
+          .getUser().getName()));
     }
-    
-    if (output != null) 
-      getMessageSender().sendMessage(message.reply(output));
+
+    if (output != null) getMessageSender().sendMessage(message.reply(output));
   }
-  
+
   /**
-   * Looks back 2 items in the user's history for any message containing 'search'.
-   * If found replaces it with 'replace' and returns the new message.
+   * Looks back 2 items in the user's history for any message containing
+   * 'search'. If found replaces it with 'replace' and returns the new message.
    */
-  private String attemptSearchReplace(Subscriber subscriber, 
-                                      String search, String replace, boolean global) {
+  private String attemptSearchReplace(Subscriber subscriber, String search,
+      String replace, boolean global) {
     if (subscriber == null) {
       return null;
     }
-    
+
     Pattern searchPattern;
-    
+
     try {
       searchPattern = Pattern.compile(search);
     } catch (PatternSyntaxException e) {
-      // Don't let the user put in crappy patterns. 
-      // TODO(dolapo): Also, we should probably let them know they did something wrong.
+      // Don't let the user put in crappy patterns.
+      // TODO(dolapo): Also, we should probably let them know they did something
+      // wrong.
       return null;
     }
-    
+
     List<SubscriberHistory.HistoryItem> history = subscriber.getHistoryItems();
     int historySize = history.size();
-    
+
     String intent = null;
     for (int i = historySize - 1; i >= 0 && i > historySize - 3; --i) {
-      Matcher searchMatcher = searchPattern.matcher(
-          history.get(i).getMessage().getContent());
+      Matcher searchMatcher = searchPattern.matcher(history.get(i).getMessage()
+          .getContent());
       if (searchMatcher.find()) {
         // Handle /g correctly.
         if (global) {
@@ -256,235 +192,14 @@ public class PartyBot extends AbstractBot {
     if (intent == null) {
       return null;
     }
-        
+
     return String.format(SR_OUTPUT, subscriber.getDisplayName(), intent);
   }
-  
-  private String doCommand(final Subscriber subscriber, String command) {
 
-    Matcher matcher = HELP_RX.matcher(command);
-    if (matcher.matches()) {
-      return help();
-    }
-    
-    matcher = CREATE_RX.matcher(command);
-    if (matcher.matches()) {
-      String lineName = matcher.group(2);
-      String pwd = matcher.group(3);
-
-      String output = lineManager.startLine(lineName, pwd);
-      return output + (lineManager.subscribe(subscriber, lineName, pwd));
-
-    }
-    
-    matcher = SUBSCRIBE_RX.matcher(command);    
-    if (matcher.matches()) {
-      String announcement = String.format(
-    		  SUB_JOINED, subscriber.getUser().getName());
-      
-
-      String userResponse = lineManager.subscribe(subscriber, matcher.group(2), 
-                    matcher.group(3));
-      PartyLine partyLine = lineManager.getPartyLine(subscriber);
-      
-      announce(partyLine, announcement);
-      
-      return userResponse;
-    }
-
-    matcher = STATUS_RX.matcher(command);   
-    if (matcher.matches()) {
-      return getStatus(subscriber);
-    }
-
-    matcher = LIST_RX.matcher(command);
-    if (matcher.matches()) {
-      PartyLine partyLine = lineManager.getPartyLine(subscriber);
-      if (partyLine == null)
-        return LineManager.NOT_IN;
-      else
-        return formatSubscriberList(partyLine);
-    }
-    
-    matcher = SNOOZE_RX.matcher(command);
-    // /snooze 10m
-    // /snooze
-    // 
-    if (matcher.matches()) {
-      final PartyLine partyLine = lineManager.getPartyLine(subscriber);
-      if (partyLine == null)
-        return LineManager.NOT_IN;
-      
-      String time = matcher.group(2);
-      
-      if (time.length() == 0 && subscriber.isSnoozing()) {
-        // They're no longer snoozing.
-        subscriber.setSnoozeUntil(0);
-        return null;
-      } else if (time.length() == 0 && !subscriber.isSnoozing()) {
-        return NOT_CURRENTLY_SNOOZING;
-      }
-      
-      // They're not snoozing and they want to be.
-      long snoozeTime;
-      try {
-        snoozeTime = DateUtil.parseTime(time);
-      } catch (ParseException e) {
-        return SNOOZE_INCORRECT_TIME;
-      }
-      
-      long snoozeUntil = System.currentTimeMillis() + snoozeTime;
-      long oldSnoozeUntil = subscriber.isSnoozing() ? 
-          subscriber.getSnoozeUntil() : 0;
-      subscriber.setSnoozeUntil(snoozeUntil);
-      
-      // Cancel any existing snooze settings if they exist.
-      if (oldSnoozeUntil > 0) {
-        futureTask.removeTask(oldSnoozeUntil);
-      }
-
-      // Set up the new snooze.
-      futureTask.addTask(snoozeUntil, new Runnable() {
-        public void run() {
-          subscriber.setSnoozeUntil(0);
-        }});
-
-      return String.format(SNOOZE_SEE_YOU_IN, time);
-    }
-    
-    matcher = ALIAS_RX.matcher(command);
-    if (matcher.matches()) {
-      // make sure they're in a party chat before aliasing them.
-      PartyLine partyLine = lineManager.getPartyLine(subscriber);
-      if (partyLine == null)
-        return LineManager.NOT_IN;
-
-      String alias = matcher.group(2);
-      for (Subscriber sub : partyLine.getSubscribers()) {
-        if (alias.equals(sub.getAlias()))
-          return String.format(ALIAS_TAKEN, alias);
-      }
-      
-      String aliasResponse;
-      String oldAlias = subscriber.getAlias();
-      if (alias.equals("")) {
-        subscriber.setAlias(null);
-        aliasResponse = ALIAS_REMOVED;
-      } else {
-        subscriber.setAlias(alias);
-        aliasResponse = String.format(ALIAS_SET, alias);
-      }
-      
-      String announcement;
-      if (oldAlias == null) {
-        announcement = String.format(
-            SUB_ALIAS_CHANGE, subscriber.getUser().getName(), alias);
-      } else {
-        announcement = String.format(
-            SUB_ALIAS_CHANGE_HAD_PREVIOUS, subscriber.getUser().getName(),
-            oldAlias, alias);
-      }
-
-      announce(partyLine, announcement);
-      
-      return aliasResponse;
-    }
-
-    matcher = UNSUBSCRIBE_RX.matcher(command);
-    if (matcher.matches()) {
-      Subscriber.forget(subscriber);
-      String announcement = String.format(
-          SUB_LEFT, subscriber.getUser().getName());
-      PartyLine partyLine = lineManager.getPartyLine(subscriber);
-      
-      if (partyLine != null) {
-        announce(partyLine, announcement);
-      }
-      return lineManager.unsubscribe(subscriber, matcher.group(2));
-    }
-        
-    matcher = COMMANDS_RX.matcher(command);
-    if(matcher.matches()) {
-      return getCommands();
-    }
-    
-    matcher = SAVE_RX.matcher(command);
-    if (matcher.matches()) {
-      return saveState(subscriber);
-    }
-        
-    matcher = SCORE_RX.matcher(command);
-    if (matcher.matches()) {
-      PartyLine partyLine = lineManager.getPartyLine(subscriber);
-      if (partyLine == null) return LineManager.NOT_IN;
-      String commandName = matcher.group(1);
-      String regex = matcher.group(3);
-      
-      return printScore(
-          partyLine.getName(), 
-          regex,
-          commandName.equals("reasons"));
-    }
-    
-    matcher = ME_RX.matcher(command);
-    if (matcher.matches()) {
-      PartyLine partyLine = lineManager.getPartyLine(subscriber);
-      if (partyLine == null)
-        return LineManager.NOT_IN;
-      String actionCast = "_" + subscriber.getAlias() + " " + matcher.group(2) + "_";
-      broadcast(subscriber, partyLine, actionCast, true);
-      return actionCast;
-    }
-    
-    matcher = WHOIS_RX.matcher(command);
-    if (matcher.matches()) {
-      // Hey wouldn't it be cool if we could separate commands based on what
-      // they need - like being in an active line? nah, copy/paste is much more
-      // fun.
-      PartyLine partyLine = lineManager.getPartyLine(subscriber);
-      if (partyLine == null)
-        return LineManager.NOT_IN;
-      
-      // Find a subscriber with that alias or "name".
-      String alias = matcher.group(2);
-      Subscriber sub = findSubscriber(partyLine, alias);
-      if (sub != null) {
-        return formatSubscriberInfo(sub);
-      }
-      // Sorry, no such subscriber.
-      return String.format(NO_SUBSCRIBER, alias);
-    }
-    
-    matcher = WHISPER_RX.matcher(command);
-    if (matcher.matches()) {
-      PartyLine partyLine = lineManager.getPartyLine(subscriber);
-      if (partyLine == null)
-        return LineManager.NOT_IN;
-      
-      String alias = matcher.group(2);
-      String msg = matcher.group(3);
-      String formattedMsg = String.format(PRIVATE_MESSAGE_FORMAT, 
-          subscriber.getDisplayName(),
-          msg);
-      
-      // It makes it easier for testing to not check if they're whispering to
-      // themself.
-      Subscriber to = findSubscriber(partyLine, alias);
-      if (to == null) {
-        return String.format(NO_SUBSCRIBER, alias);
-      }
-      
-      Message whispermsg = new Message(
-          User.get(to.getBotScreenName(), botName()), 
-          to.getUser(), formattedMsg);
-      getMessageSender().sendMessage(whispermsg);
-      
-      return null;
-    }
-    
-    return unknownCommand(command);
+  FutureTask getFutureTask() {
+    return futureTask;
   }
-  
+
   /**
    * Finds a subscriber with the given alias or name.
    * 
@@ -494,47 +209,46 @@ public class PartyBot extends AbstractBot {
    */
   Subscriber findSubscriber(PartyLine partyLine, String aliasOrName) {
     for (Subscriber sub : partyLine.getSubscribers()) {
-      if (aliasOrName.equals(sub.getAlias()) ||
-          aliasOrName.equals(sub.getUser().getName())) {
+      if (aliasOrName.equals(sub.getAlias())
+          || aliasOrName.equals(sub.getUser().getName())) {
         return sub;
       }
     }
-    
+
     return null;
   }
-  
-  /** 
+
+  /**
    * subscriber - can be null.
-   * @return message you want sent back to the broadcaster/subscriber 
-   * */
-  String broadcast(Subscriber subscriber, PartyLine partyLine, 
-      String content, boolean isSystem) {
+   * 
+   * @return message you want sent back to the broadcaster/subscriber
+   */
+  String broadcast(Subscriber subscriber, PartyLine partyLine, String content,
+      boolean isSystem) {
     if (!isSystem)
-      content = String.format(MESSAGE_FORMAT, 
-                         subscriber.getDisplayName(),
-                         content);
-    
+      content = String.format(MESSAGE_FORMAT, subscriber.getDisplayName(),
+          content);
+
     for (Subscriber listener : partyLine.getSubscribers()) {
-      if (! listener.equals(subscriber)) {
+      if (!listener.equals(subscriber)) {
         if (listener.isSnoozing()) {
           // TODO(dolapo) - Actually save the messages. Post sqlite thing.
-          //listener.addDelayedMessage(content);
+          // listener.addDelayedMessage(content);
           continue;
         }
-        Message msg = new Message(
-            User.get(listener.getBotScreenName(), botName()), 
-            listener.getUser(), content);
+        Message msg = new Message(User.get(listener.getBotScreenName(),
+            botName()), listener.getUser(), content);
         getMessageSender().sendMessage(msg);
       }
     }
 
     return null;
   }
-  
+
   String broadcast(Subscriber subscriber, PartyLine partyLine, Message message) {
     return broadcast(subscriber, partyLine, message.getContent(), false);
   }
-  
+
   /**
    * Sends a message from the system.
    * 
@@ -550,131 +264,37 @@ public class PartyBot extends AbstractBot {
     return broadcast(null, partyLine, message, true);
   }
 
-  private String getStatus(Subscriber sub) {
+  String getStatus(Subscriber sub) {
     PartyLine partyLine = lineManager.getPartyLine(sub);
     if (partyLine == null) {
       return SUB_STATUS_OFFLINE;
     } else {
-      return String.format(SUB_STATUS_ONLINE, partyLine.getName(), 
-                sub.getDisplayName());
+      return String.format(SUB_STATUS_ONLINE, partyLine.getName(), sub
+          .getDisplayName());
     }
   }
-  
-  private String help() {
-    return String.format(HELP_PROMPT, JOIN, EXIT, COMMANDS);
-    
-  }
-  
+
   private String unknownCommand(String command) {
     return String.format(UKNOWN_COMMAND, command);
   }
-  
-  private String formatSubscriberList(PartyLine partyLine) {
-    StringBuffer sb = new StringBuffer();
-    sb.append("#"+partyLine.getName() + " members:\n");
-    for (Subscriber sub : partyLine.getSubscribers()) {
-      sb.append(sub.getUser().getName());
 
-      if (sub.getAlias() != null)
-        sb.append(" (" + sub.getAlias() + ")");
-      if (sub.isSnoozing())
-        sb.append(" snoozing for " + timeTill(sub.getSnoozeUntil()));
-      sb.append("\n");
-    }
-    return sb.toString();
-  }
-  
-  /**
-   * Returns a message like:
-   * joe@gmail.com (joe)
-   * joined chat @ [time] 
-   * last seen @ [time]
-   * total messages [num]
-   * total words [num]
-   * snoozing for [time]
-   * 
-   */
-  private String formatSubscriberInfo(Subscriber subscriber) {
-    StringBuffer sb = new StringBuffer();
-    sb.append(subscriber.getUser().getName());
-    if (subscriber.getAlias() != null) {
-      sb.append(" (").append(subscriber.getAlias()).append(")");
-    }
-    
-    if (subscriber.getLineJoinTime() > 0) {
-      sb.append("\nMember for ")
-        .append(timeSince(subscriber.getLineJoinTime()));
-    }
-    
-    if (subscriber.getLastActivityTime() > 0) {
-      sb.append("\nLast seen ")
-        .append(timeSince(subscriber.getLastActivityTime()))
-        .append(" ago");
-    }
-    
-    if (subscriber.getHistory().getTotalMessageCount() > 0) {
-      sb.append("\nTotal messages: ").append(subscriber.getHistory().getTotalMessageCount());
-    }
-    
-    if (subscriber.getHistory().getTotalWordCount() > 0) {
-      sb.append("\nApproximate words: ").append(subscriber.getHistory().getTotalWordCount());
-    }
-    
-    if (subscriber.isSnoozing()) {
-      sb.append("\nSnoozing for " + timeTill(subscriber.getSnoozeUntil()) );
-    }
-    return sb.toString();
-  }
 
   /** Prints how long till the given time */
-  private static String timeTill(long futureTimeMs) {
-    return DateUtil.prettyFormatTime(
-        futureTimeMs - System.currentTimeMillis());
+  static String timeTill(long futureTimeMs) {
+    return DateUtil.prettyFormatTime(futureTimeMs - System.currentTimeMillis());
   }
-  
-  private static String timeSince(long pastTimeMs) {
-    return DateUtil.prettyFormatTime(
-        System.currentTimeMillis() - pastTimeMs);
+
+  static String timeSince(long pastTimeMs) {
+    return DateUtil.prettyFormatTime(System.currentTimeMillis() - pastTimeMs);
   }
-    
-  private String printScore(String chat, String regex, boolean showReasons) {
+
+  String printScore(String chat, String regex, boolean showReasons) {
     return plusPlusBot.getScores(chat, regex, showReasons);
   }
-  
-  private String getCommands() {
-    return String.format("PartyChat commands: \n\n" +
-        "%s chat_name [optional_password] - creates a new party chat. "+
-        "if you provide a password, then other users must give this " +
-        "password to enter the chat.\n\n" +
-        
-        "%s chat_name [password] - join an existing party chat. if the" +
-        "chat has a password, you must give the password to enter.\n\n" +
-        
-        "%s - display the party chat name and your alias.\n\n" +
-        
-        "%s - list the current members of the party chat you are in.\n\n" +
-        
-        "%s [name] - give yourself an alias; if you do not specify a name," +
-        " your current alias is removed.\n\n" +
 
-        "%s [name] - return the score for a given name (may also be a regular " +
-        "expression).\n\n" +
-
-        "%s [name] - similar to /score, except it also returns the reasons " +
-        " for increments/decrements.\n\n" +
-
-        "%s - leave the party chat you are currently in.\n\n" +
-        
-        "%s - offer some instructions on how to use PartyChat and" +
-        "directs users to '" + COMMANDS + "'.\n\n" +
-        
-        "%s - displays this menu", 
-        CREATE, JOIN, STATUS, LIST, ALIAS, SCORE, REASONS, EXIT, HELP, 
-        COMMANDS);
-  }
-  
-  private String saveState(Subscriber subscriber) {
+  String saveState(Subscriber subscriber) {
     String user = subscriber.getUser().getName();
+    // TODO(ak): load administrators from a config file
     if (user.equals("apatil@gmail.com") || user.equals("mbolin@gmail.com")) {
       sh.run();
       return "state saved";
@@ -682,14 +302,13 @@ public class PartyBot extends AbstractBot {
       return "authorized personnel only";
     }
   }
-  
+
   public static void main(String[] args) {
     List<String> argList = Arrays.asList(args);
-    assert argList.size() > 2 : 
-      "usage: java PartyBot botName usn pwd usn pwd ...";
+    assert argList.size() > 2 : "usage: java PartyBot botName usn pwd usn pwd ...";
     Bot bot = new PartyBot(argList.get(0));
     Logger.log(String.format("Running %s with parameters: %s", bot.getClass(),
-                Arrays.toString(args)), true);
+        Arrays.toString(args)), true);
     run(bot, argList.subList(1, argList.size()));
   }
 
@@ -710,9 +329,8 @@ public class PartyBot extends AbstractBot {
         for (PartyLine pl : blah) {
           blah2.add(new PartyLineBean(pl));
         }
-        XMLEncoder e = new XMLEncoder(
-                      new BufferedOutputStream(
-                              new FileOutputStream(xmlfilename)));
+        XMLEncoder e = new XMLEncoder(new BufferedOutputStream(
+            new FileOutputStream(xmlfilename)));
         e.writeObject(blah2);
         e.close();
         Logger.log("State successfully stored to " + xmlfilename);
@@ -722,13 +340,13 @@ public class PartyBot extends AbstractBot {
 
     }
   }
-  
+
   @SuppressWarnings("unchecked")
   private LineManager loadState() {
     Collection<PartyLineBean> result = null;
     try {
-      XMLDecoder d = new XMLDecoder(
-                new BufferedInputStream(new FileInputStream("state.xml")));
+      XMLDecoder d = new XMLDecoder(new BufferedInputStream(
+          new FileInputStream("state.xml")));
       result = (Collection<PartyLineBean>) d.readObject();
       d.close();
     } catch (FileNotFoundException e) {

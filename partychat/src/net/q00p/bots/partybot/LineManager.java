@@ -17,11 +17,11 @@ public class LineManager implements Serializable {
 	static final String ALREADY_IN = "you are already in #%s";
 	static final String DOESNT_EXIST = "party chat #%s doesn't already " +
 			"exist, to create it type " +
-			"'" + PartyBot.CREATE + " %s [optional_password]'";
+			"'" + Command.CREATE.getShortName() + " %s [optional_password]'";
 	static final String NOW_IN = "you are now in #%s";
 	static final String NOT_IN = "you are currently not in a party chat";
 	static final String WRONG_CHAT = "you are not in #%s, but you" +
-			"are in party chat #%s.\nto leave, type: '" + PartyBot.EXIT +"'";
+			"are in party chat #%s.\nto leave, type: '" + Command.EXIT.getShortName() +"'";
 	static final String NOW_LEFT = "you have left #%s.";
 	static final String CHAT_CREATED = "you have created party chat #%s";
 	static final String CHAT_ALREADY_EXISTS = 
