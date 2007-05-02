@@ -1,8 +1,5 @@
 package net.q00p.bots.util;
 
-import java.util.Iterator;
-import java.util.List;
-
 import net.q00p.bots.Bot;
 import net.q00p.bots.Message;
 import net.q00p.bots.MessageSender;
@@ -10,6 +7,9 @@ import net.q00p.bots.io.Connection;
 import net.q00p.bots.io.ConnectionFactory;
 import net.q00p.bots.io.Logger;
 import net.q00p.bots.io.ConnectionFactory.GoogleTalkException;
+
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Abstract implementation of the Bot interface.

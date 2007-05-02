@@ -1,10 +1,10 @@
 package net.q00p.bots.chatbot;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import net.q00p.bots.User;
 import net.q00p.bots.util.Tuple;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Has a map of subscribers, keyed on on the user and bot scren name.

@@ -1,10 +1,10 @@
 package net.q00p.bots.io;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import net.q00p.bots.Message;
 import net.q00p.bots.MessageSender;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Creates connections and sends messages.

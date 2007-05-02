@@ -1,17 +1,14 @@
 package net.q00p.bots.partybot;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-
 import net.q00p.bots.Message;
 import net.q00p.bots.User;
 import net.q00p.bots.util.Tuple;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Captures a relationship between a user and a bot screen name.
@@ -97,10 +94,16 @@ public class Subscriber implements Serializable {
   }
   
   public String getDisplayName() {
-    if (alias != null) return String.format(ALIAS_TEMPLATE, alias);
+    return getDisplayName(false);
+  }
+  
+  public String getDisplayName(boolean noFormatting) {
+    if (alias != null) {
+      return noFormatting ? alias : String.format(ALIAS_TEMPLATE, alias);
+    }
     else return user.getName();
   }
-    
+
   public String toString() {
     return user + "|" + botScreenName + " \"" + alias + "\"";
   }

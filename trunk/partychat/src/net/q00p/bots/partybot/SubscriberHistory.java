@@ -1,9 +1,9 @@
 package net.q00p.bots.partybot;
 
+import net.q00p.bots.Message;
+
 import java.util.LinkedList;
 import java.util.List;
-
-import net.q00p.bots.Message;
 
 /**
  * History tracking for a subscriber. Note: a Subscriber describes the
