@@ -75,7 +75,7 @@ public enum Command {
 
   SAVE_STATE(Pattern.compile("/(save-state)(\\s+\\S+)*",
       Pattern.CASE_INSENSITIVE), "if you can use this, then you know",
-      new SaveStateCommandHandler()),
+      new SaveStateCommandHandler(), true),
 
   ;
 
