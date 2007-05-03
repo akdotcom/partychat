@@ -3,6 +3,7 @@ package net.q00p.bots.io;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.provider.ProviderManager;
 
 public class ConnectionFactory {
 	private static ConnectionManager cm = new ConnectionManager();
@@ -20,6 +21,7 @@ public class ConnectionFactory {
 		Connection conn = new Connection(connection);
 		cm.addConnection(username+"@gmail.com", conn);
 
+		ProviderManager.getInstance().removeExtensionProvider("x", "jabber:x:delay");
 		return conn;
 	}
 	
