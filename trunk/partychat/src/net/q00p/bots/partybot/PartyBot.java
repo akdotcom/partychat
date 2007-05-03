@@ -274,11 +274,6 @@ public class PartyBot extends AbstractBot {
     }
   }
 
-  private String unknownCommand(String command) {
-    return String.format(UKNOWN_COMMAND, command);
-  }
-
-
   /** Prints how long till the given time */
   static String timeTill(long futureTimeMs) {
     return DateUtil.prettyFormatTime(futureTimeMs - System.currentTimeMillis());

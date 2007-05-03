@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry output="bin" kind="src" path="src"/>
-	<classpathentry sourcepath="JRE_SRC" kind="var" path="JRE_LIB"/>
-	<classpathentry kind="lib" path="lib/smackx-debug.jar"/>
-	<classpathentry kind="lib" path="lib/smackx.jar"/>
-	<classpathentry kind="lib" path="lib/smack.jar"/>
+	<classpathentry kind="src" output="bin" path="src"/>
+	<classpathentry kind="var" path="JRE_LIB" sourcepath="JRE_SRC"/>
+	<classpathentry kind="lib" path="smack-3.0.1/smack.jar"/>
+	<classpathentry kind="lib" path="smack-3.0.1/smackx.jar"/>
+	<classpathentry kind="lib" path="smack-3.0.1/smackx-jingle.jar"/>
+	<classpathentry kind="lib" path="smack-3.0.1/smackx-debug.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
