@@ -12,7 +12,7 @@ public class HelpCommandHandler implements CommandHandler {
   public String doCommand(PartyBot partyBot, LineManager lineManager,
       Subscriber subscriber, Matcher commandMatcher) {
     return String.format(HELP_PROMPT, Command.JOIN.getShortName(),
-        Command.EXIT.getShortName(), Command.HELP.getShortName());
+        Command.EXIT.getShortName(), Command.COMMANDS.getShortName());
   }
 
 }
