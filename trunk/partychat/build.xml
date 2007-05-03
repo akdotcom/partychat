@@ -49,8 +49,8 @@
 	      <java fork="yes" classname="net.q00p.bots.echobot.EchoBot" failonerror="true">
 	        <classpath refid="classpath.path"/>
 	        <arg value="echobot"/>
-	        <arg value="gakbot"/>
-	        <arg value="64kb0t10128"/>
+	        <arg value="googletalkusn"/>
+	        <arg value="googletalkpwd"/>
 	      </java>
 	  </target>
 
