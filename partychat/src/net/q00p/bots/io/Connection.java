@@ -1,18 +1,5 @@
 package net.q00p.bots.io;
 
-import net.q00p.bots.Bot;
-import net.q00p.bots.Message;
-import net.q00p.bots.MessageSender;
-import net.q00p.bots.User;
-
-import org.jivesoftware.smack.Chat;
-import org.jivesoftware.smack.GoogleTalkConnection;
-import org.jivesoftware.smack.PacketListener;
-import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.filter.MessageTypeFilter;
-import org.jivesoftware.smack.filter.PacketFilter;
-import org.jivesoftware.smack.packet.Packet;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -21,22 +8,36 @@ import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import net.q00p.bots.Bot;
+import net.q00p.bots.Message;
+import net.q00p.bots.MessageSender;
+import net.q00p.bots.User;
+
+import org.jivesoftware.smack.Chat;
+import org.jivesoftware.smack.MessageListener;
+import org.jivesoftware.smack.PacketListener;
+import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.filter.MessageTypeFilter;
+import org.jivesoftware.smack.filter.PacketFilter;
+import org.jivesoftware.smack.packet.Packet;
+
 /**
  * Wrapper for Google talk connection that exposes the ability to send messages.
  * 
  * @author ak
  */
 public class Connection implements MessageSender {
-	private final GoogleTalkConnection connection;
+	private final XMPPConnection connection;
 	
 	private final Queue<Message> messagesToSend;
 	private final Timer timer = new Timer();
 	private final Map<User,Chat> chats = new HashMap<User,Chat>();
 
-	protected Connection(GoogleTalkConnection con) {
+	protected Connection(XMPPConnection con) {
 		connection = con;
 	    assert connection.isConnected();
-	    
+
 	    messagesToSend = new LinkedList<Message>();
 	    timer.schedule(new SendMessageTask(), new Date(), 10);
 	    Logger.log("Connection: " + this.toString() + " created", true);
@@ -68,7 +69,7 @@ public class Connection implements MessageSender {
 	        }
 	      };
 	      PacketFilter filter = 
-	    	  	new MessageTypeFilter(org.jivesoftware.smack.packet.Message.Type.CHAT);
+	    	  	new MessageTypeFilter(org.jivesoftware.smack.packet.Message.Type.chat);
 	      connection.addPacketListener(listener, filter);
 	      Logger.log(bot.botName() + " added to " + toString(), true);
 	}
@@ -84,33 +85,41 @@ public class Connection implements MessageSender {
 	}
 	
 	/**
+	 *  Gets a Chat if it's already been created, or create one if necessary.
+	 */
+	public Chat getOrCreateChat(User user, boolean remember) {
+		Chat chat = chats.get(user);
+		if (chat == null) {
+			chat = connection.getChatManager().createChat(user.getName(), new MessageListener() {
+				public void processMessage(Chat c, org.jivesoftware.smack.packet.Message m) {}
+			});
+			if (remember) {
+				chats.put(user, chat);
+			}
+		}
+		return chat;
+	}
+	
+	/**
 	 * Call this if you plan to engage this user in a dialogue. Be sure to call
 	 * forgetUser when the bot is done talking to the user. Analogous to leaving the
 	 * window open; it probably has archiving implications.
 	 */
 	public void rememberUser(User user) {
-		Chat chat = chats.get(user);
-		if (chat == null) {
-			chat = connection.createChat(user.getName());
-			chats.put(user, chat);
-		}
+		getOrCreateChat(user, true);
 	}
-	
+
 	public void forgetUser(User user) {
 		chats.remove(user);
 	}
-			
+
 	private class SendMessageTask extends TimerTask {
 		@Override
 		public void run() {
 			Message msg = messagesToSend.poll();
 			if (msg == null) return;
 		      	
-			Chat chat = chats.get(msg.getTo());
-			if (chat == null) {
-				chat = connection.createChat(msg.getTo().getName());
-		        
-			}
+			Chat chat = getOrCreateChat(msg.getTo(), false);
 			try {
 				chat.sendMessage(msg.getContent());
 //				Logger.log(msg.getFrom() + " -> " + msg.getTo() + " : " 
