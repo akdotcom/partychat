@@ -290,7 +290,9 @@ public class PartyBot extends AbstractBot {
   String saveState(Subscriber subscriber) {
     String user = subscriber.getUser().getName();
     // TODO(ak): load administrators from a config file
-    if (user.equals("apatil@gmail.com") || user.equals("mbolin@gmail.com")) {
+    if (user.equals("apatil@gmail.com") 
+        || user.equals("mbolin@gmail.com")
+        || user.equals("ak@q00p.net")) {
       sh.run();
       return "state saved";
     } else {
@@ -307,6 +309,7 @@ public class PartyBot extends AbstractBot {
     run(bot, argList.subList(1, argList.size()));
   }
 
+  //TODO: This is lame. We should have some sort of backend
   class StateSaver extends TimerTask {
     LineManager manager;
 
