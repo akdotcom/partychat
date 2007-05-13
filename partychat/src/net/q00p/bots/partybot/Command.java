@@ -38,11 +38,11 @@ public enum Command {
       + " your current alias is removed", new AliasCommandHandler()),
 
   SCORE(Pattern.compile("/score(\\s+)?(.*)"), "/score [name]"
-      + " - give yourself an alias; if you do not specify a name,"
-      + " your current alias is removed", new ScoreCommandHandler()),
+      + " - get the score for a name. if no name is given, " 
+      + "then all scores are printed", new ScoreCommandHandler()),
 
-  // TODO(kushal): document /me (no pun intended)
-  ME(Pattern.compile("/(me)\\s+(.*)"), "", new MeCommandHandler()),
+  ME(Pattern.compile("/(me)\\s+(.*)"), "/me message" 
+      + " - say something in the third person", new MeCommandHandler()),
 
   REASONS(Pattern.compile("/reasons(\\s+)?(.*)"), "/reasons [name]"
       + " - similar to /score, except it also returns the reasons "
@@ -61,17 +61,18 @@ public enum Command {
       Pattern.CASE_INSENSITIVE), "/commands - displays this menu",
       new CommandsCommandHandler()),
 
-  // TODO(dolapo): add documentation
-  SNOOZE(Pattern.compile("/(snooze)\\s*(.*)"), "/snooze",
+  SNOOZE(Pattern.compile("/(snooze)\\s*(.*)"), "/snooze time" 
+      + " - ignore this partychat for the specified amount of time. E.g." 
+      + "\"snooze 1h\" or \"snooze 15m\"",
       new SnoozeCommandHandler()),
 
-  // TODO(dolapo): add documentation
-  WHOIS(Pattern.compile("/(whois|describe)\\s+(\\S*)"), "/whois",
+  WHOIS(Pattern.compile("/(whois|describe)\\s+(\\S*)"), "/whois name" 
+      + " - display information about this party chat user/alias",
       new WhoisCommandHandler()),
 
-  // TODO(dolapo): add documentation
-  WHISPER(Pattern.compile("/(whisper|msg)\\s+(\\S*)\\s+(\\S.*)"), "/whisper",
-      new WhisperCommandHandler()),
+  WHISPER(Pattern.compile("/(whisper|msg)\\s+(\\S*)\\s+(\\S.*)"), 
+      "/whisper name message - send a private message to another user",
+      new WhisperCommandHandler()),	
 
   SAVE_STATE(Pattern.compile("/(save-state)(\\s+\\S+)*",
       Pattern.CASE_INSENSITIVE), "if you can use this, then you know",
