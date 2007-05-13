@@ -22,8 +22,9 @@ public class Logger {
 		BufferedWriter writer = null;
 		String logname = "botlog.txt";
 		try {
-			logname = "botlog_"+System.currentTimeMillis()%1000000000+".txt";
-			writer = new BufferedWriter(new FileWriter(new File(logname)));
+		    logname = "botlog_"+ Long.toString(System.currentTimeMillis(), 36) 
+		      + ".txt";
+		    writer = new BufferedWriter(new FileWriter(new File(logname)));
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
