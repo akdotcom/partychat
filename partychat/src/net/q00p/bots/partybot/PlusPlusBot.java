@@ -143,7 +143,6 @@ public class PlusPlusBot {
     blacklistedTargets = new HashSet<String>();
     // For now, hard-code the most obvious unintentional targets
     blacklistedTargets.add("c");
-    blacklistedTargets.add("C");
     
     scoreBoard = new HashMap<String, Map<String, Score>>();
     try {
@@ -215,8 +214,25 @@ public class PlusPlusBot {
   public Message doCommand(String from, String chat, String target,
       String reason, boolean increment) {
     
+    // Normalize targets to lower case
+    target = target.toLowerCase();
+    
     // Skip the blacklist
     if (blacklistedTargets.contains(target)) {
+      return null;
+    }
+    
+    // Make sure the target name contains at least one letter or digit, to skip
+    // over unintentional actions like using "<----"
+    boolean hasLetters = false;
+    for (int i = 0; i < target.length(); i++) {
+      if (Character.isLetterOrDigit(target.charAt(i))) {
+        hasLetters = true;
+        break;
+      }
+    }
+    
+    if (!hasLetters) {
       return null;
     }
     
