@@ -141,6 +141,10 @@ public class PlusPlusBot {
   
   public PlusPlusBot() {
     blacklistedTargets = new HashSet<String>();
+    // For now, hard-code the most obvious unintentional targets
+    blacklistedTargets.add("c");
+    blacklistedTargets.add("C");
+    
     scoreBoard = new HashMap<String, Map<String, Score>>();
     try {
       logFile = prepareAndLoadLog("ppblog");
@@ -304,7 +308,11 @@ public class PlusPlusBot {
             .append(score.getCurrentScore());
 
       if (showReasons) {
-        for (Op op : score.getOps()) {
+        List<Op> ops = new ArrayList<Op>(score.getOps());
+        // Print the reasons in reverse order since Gmail chat will truncate 
+        // long messages and the most-recent reasons are the most relevant ones 
+        Collections.reverse(ops);
+        for (Op op : ops) {
           result.append("\n");
           result.append(op.getDescription());
         }
