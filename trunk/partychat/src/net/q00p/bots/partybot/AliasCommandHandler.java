@@ -2,7 +2,7 @@ package net.q00p.bots.partybot;
 
 import java.util.regex.Matcher;
 
-public class AliasCommandHandler implements CommandHandler {
+public class AliasCommandHandler extends PartyLineCommandHandler {
   private static final String ALIAS_SET = "alias set to %s";
   private static final String ALIAS_REMOVED = "alias removed";
   private static final String ALIAS_TAKEN = "alias %s is already taken, "
@@ -10,12 +10,12 @@ public class AliasCommandHandler implements CommandHandler {
   private static final String SUB_ALIAS_CHANGE = "%s is now known as %s";
   private static final String SUB_ALIAS_CHANGE_HAD_PREVIOUS = "%s (%s) is now known as %s";
 
-  public String doCommand(PartyBot partyBot, LineManager lineManager,
-      Subscriber subscriber, Matcher commandMatcher) {
+  public String doCommand(
+      PartyBot partyBot,
+      PartyLine partyLine,
+      Subscriber subscriber,
+      Matcher commandMatcher) {
     // make sure they're in a party chat before aliasing them.
-    PartyLine partyLine = lineManager.getPartyLine(subscriber);
-    if (partyLine == null) return LineManager.NOT_IN;
-
     String alias = commandMatcher.group(2);
     for (Subscriber sub : partyLine.getSubscribers()) {
       if (alias.equals(sub.getAlias()))
