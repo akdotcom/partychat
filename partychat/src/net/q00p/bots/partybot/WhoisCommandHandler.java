@@ -2,16 +2,10 @@ package net.q00p.bots.partybot;
 
 import java.util.regex.Matcher;
 
-public class WhoisCommandHandler implements CommandHandler {
+public class WhoisCommandHandler extends PartyLineCommandHandler {
 
-  public String doCommand(PartyBot partyBot, LineManager lineManager,
+  public String doCommand(PartyBot partyBot, PartyLine partyLine,
       Subscriber subscriber, Matcher commandMatcher) {
-    // Hey wouldn't it be cool if we could separate commands based on what
-    // they need - like being in an active line? nah, copy/paste is much more
-    // fun.
-    PartyLine partyLine = lineManager.getPartyLine(subscriber);
-    if (partyLine == null) return LineManager.NOT_IN;
-
     // Find a subscriber with that alias or "name".
     String alias = commandMatcher.group(2);
     Subscriber sub = partyBot.findSubscriber(partyLine, alias);
