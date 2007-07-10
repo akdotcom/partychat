@@ -177,9 +177,11 @@ public class PartyBot extends AbstractBot {
     int historySize = history.size();
 
     String intent = null;
+    // Loop through the history backwards, since presumably the user wants to
+    // correct a more recent message
     for (int i = historySize - 1; i >= 0 && i > historySize - 3; --i) {
-      Matcher searchMatcher = searchPattern.matcher(history.get(i).getMessage()
-          .getContent());
+      String original = history.get(i).getMessage().getContent();
+      Matcher searchMatcher = searchPattern.matcher(original);
       if (searchMatcher.find()) {
         // Handle /g correctly.
         if (global) {
@@ -187,6 +189,9 @@ public class PartyBot extends AbstractBot {
         } else {
           intent = searchMatcher.replaceFirst(replace);
         }
+        
+        // Stop looking for a match now that we've found one
+        break;
       }
     }
     if (intent == null) {
