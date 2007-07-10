@@ -12,7 +12,7 @@ import java.util.Map;
  * 
  * @author ak
  */
-public class User implements Comparable, Serializable {
+public class User implements Comparable<User>, Serializable {
 	private final String name;
 	private final String client;
 	private final String nameClient;
@@ -68,10 +68,7 @@ public class User implements Comparable, Serializable {
 	}
 		
 	public boolean equals(Object obj) {
-		if (obj != null && obj instanceof User && ((User)obj).name.equals(name))
-			return true;
-		else
-			return false;
+		return (obj != null && obj instanceof User && ((User)obj).name.equals(name));
 	}
 	
 	public int hashCode() {
@@ -82,10 +79,7 @@ public class User implements Comparable, Serializable {
 		return nameClient;
 	}
 	
-	public int compareTo(Object obj) {
-		if( obj == null || !(obj instanceof User)) 
-			throw new RuntimeException("User can't compare with "+obj);
-		User user2 = (User)obj;
+	public int compareTo(User user2) {
 		return name.compareTo(user2.name);
 	}
 }
