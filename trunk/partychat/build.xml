@@ -36,7 +36,7 @@
          />
   </target>
   
-  <target name="PartyBot">
+  <target name="PartyBot" depends="build">
       <java fork="yes" classname="net.q00p.bots.partybot.PartyBot" failonerror="true">
         <classpath refid="classpath.path"/>
         <arg value="partybot"/>
