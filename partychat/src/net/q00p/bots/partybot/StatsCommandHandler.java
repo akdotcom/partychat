@@ -8,7 +8,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 /**
- * TODO(mihaip)
+ * Displays usage stats about the whole partychat service (across all
+ * installations)
  *
  * @author <a href="mailto:mihai.parparita@gmail.com">Mihai Parparita</a>
  */
