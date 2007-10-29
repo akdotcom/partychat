@@ -8,20 +8,37 @@ import org.jivesoftware.smack.provider.ProviderManager;
 public class ConnectionFactory {
 	private static ConnectionManager cm = new ConnectionManager();
 	
+	private static final String DEFAULT_SERVER = "talk.google.com";
+	private static final String DEFAULT_DOMAIN = "gmail.com";
+	
+	public static void init() {
+    // Don't want offline messages
+		ProviderManager.getInstance().
+		    removeExtensionProvider("x", "jabber:x:delay");	
+	}
+	
 	public static Connection getConnection(String username, String password) {
-
+	  String server = DEFAULT_SERVER;
+	  String domain = DEFAULT_DOMAIN;
+	  
+	  int atIndex = username.indexOf("@");
+	  if (atIndex != -1) {
+	    server = domain = username.substring(atIndex + 1);
+	    username = username.substring(0, atIndex);
+	  }
+	  
 		XMPPConnection connection;
 		try {
-			connection = new XMPPConnection(new ConnectionConfiguration("talk.google.com", 5222, "gmail.com"));
+			connection = new XMPPConnection(
+			    new ConnectionConfiguration(server, 5222, domain));
 			connection.connect();
 			connection.login(username, password);
 		} catch (XMPPException e) {
 			throw new GoogleTalkException(e);
 		}
 		Connection conn = new Connection(connection);
-		cm.addConnection(username+"@gmail.com", conn);
+		cm.addConnection(username + "@" + domain, conn);
 
-		ProviderManager.getInstance().removeExtensionProvider("x", "jabber:x:delay");
 		return conn;
 	}
 	
