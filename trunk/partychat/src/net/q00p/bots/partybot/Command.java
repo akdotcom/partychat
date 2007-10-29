@@ -78,6 +78,10 @@ public enum Command {
       Pattern.CASE_INSENSITIVE), "if you can use this, then you know",
       new SaveStateCommandHandler(), true),
 
+  STATS(Pattern.compile("/stats", Pattern.CASE_INSENSITIVE), 
+      "Stats about the partychat service",
+      new StatsCommandHandler(), true),
+
   ;
 
   final Pattern pattern;

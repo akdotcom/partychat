@@ -52,7 +52,7 @@ public class User implements Comparable<User>, Serializable {
 		assert (name != null && clientInfo != null): "null input to constructor";
 		this.name = name;
 		this.client = clientInfo;
-		this.nameClient = format (name, clientInfo);
+		this.nameClient = format(name, clientInfo);
 	}
 		
 	private static String format(String name, String client) {
