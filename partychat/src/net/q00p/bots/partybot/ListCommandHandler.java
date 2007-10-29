@@ -15,15 +15,23 @@ public class ListCommandHandler implements CommandHandler {
 
   private String formatSubscriberList(PartyLine partyLine) {
     StringBuilder sb = new StringBuilder();
+    
     sb.append("#" + partyLine.getName() + " members:\n");
     for (Subscriber sub : partyLine.getSubscribers()) {
       sb.append(sub.getUser().getName());
 
       if (sub.getAlias() != null) sb.append(" (" + sub.getAlias() + ")");
-      if (sub.isSnoozing())
+      
+      if (sub.isSnoozing()) {
         sb.append(" snoozing for " + PartyBot.timeTill(sub.getSnoozeUntil()));
+      }
+      
+      sb.append(" ");
+      sb.append(sub.getUser().getClientInfo());
+      
       sb.append("\n");
     }
+    
     return sb.toString();
   }
 }

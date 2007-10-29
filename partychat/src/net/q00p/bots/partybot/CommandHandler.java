@@ -4,7 +4,7 @@ import java.util.regex.Matcher;
 
 public interface CommandHandler {
 
-  public String doCommand(PartyBot partyBot, LineManager lineManager,
+  String doCommand(PartyBot partyBot, LineManager lineManager,
       Subscriber subscriber, Matcher commandMatcher);
 
 }
