@@ -49,6 +49,18 @@ public class Logger {
 			ex.printStackTrace();
 		}
 	}
+	
+	public static void log(Throwable t, boolean systemPrint) {
+	  log(t.toString(), systemPrint);
+	  for (StackTraceElement s : t.getStackTrace()) {
+	    log("    " + s.toString(), systemPrint);
+	  }
+	  
+	  if (t.getCause() != null) {
+	    log("Caused by: ", systemPrint);
+	    log(t.getCause(), systemPrint);
+	  }
+	}
 
 	private static class LogFlushingTask extends TimerTask {
 		@Override
