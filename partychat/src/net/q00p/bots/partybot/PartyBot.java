@@ -10,6 +10,8 @@ import net.q00p.bots.util.AbstractBot;
 import net.q00p.bots.util.DateUtil;
 import net.q00p.bots.util.FutureTask;
 
+import com.google.common.collect.Sets;
+
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
 import java.io.BufferedInputStream;
@@ -22,6 +24,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
@@ -56,6 +59,14 @@ public class PartyBot extends AbstractBot {
   static final String SUB_STATUS_OFFLINE = "you are not in a party chat";
 
   static final String SR_OUTPUT = "%s meant _%s_";
+
+  // TODO(ak): load administrators from a config file  
+  private static final Set<String> ADMINISTRATORS = Sets.immutableSet(
+    "apatil@gmail.com",
+    "mbolin@gmail.com",
+    "ak@q00p.net",
+    "mihai.parparita@gmail.com"
+  );
 
   private final FutureTask futureTask = new FutureTask();
 
@@ -294,10 +305,7 @@ public class PartyBot extends AbstractBot {
 
   String saveState(Subscriber subscriber) {
     String user = subscriber.getUser().getName();
-    // TODO(ak): load administrators from a config file
-    if (user.equals("apatil@gmail.com") 
-        || user.equals("mbolin@gmail.com")
-        || user.equals("ak@q00p.net")) {
+    if (ADMINISTRATORS.contains(user)) {
       sh.run();
       return "state saved";
     } else {
