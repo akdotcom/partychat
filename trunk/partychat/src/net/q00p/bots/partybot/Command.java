@@ -1,5 +1,9 @@
 package net.q00p.bots.partybot;
 
+import com.google.common.collect.Lists;
+
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -74,6 +78,13 @@ public enum Command {
       "/whisper name message - send a private message to another user",
       new WhisperCommandHandler()),	
 
+  MAIL(Pattern.compile("/mail(\\s+\\S+)*"),
+      "/mail - display all the email addresses of the current party chat, so " +
+      "that they can be copied and pasted into an email program",
+      new MailCommandHandler()),
+
+  // Hidden commands
+      
   SAVE_STATE(Pattern.compile("/(save-state)(\\s+\\S+)*",
       Pattern.CASE_INSENSITIVE), "if you can use this, then you know",
       new SaveStateCommandHandler(), true),
@@ -140,12 +151,20 @@ public enum Command {
       return COMMAND_DOCUMENTATION;
     } else {
       StringBuilder builder = new StringBuilder("PartyChat commands: \n\n");
+      List<String> commandsDocs = Lists.newArrayList();
       for (Command command : Command.values()) {
         if (command.notPublic) {
           continue;
         }
-        builder.append(command.documentation).append("\n\n");
+        commandsDocs.add(command.documentation);
       }
+      
+      Collections.sort(commandsDocs);
+      
+      for (String commandDoc : commandsDocs) {
+        builder.append(commandDoc).append("\n\n");      
+      }
+
       return (COMMAND_DOCUMENTATION = builder.toString());
     }
   }
