@@ -42,7 +42,7 @@ public class PartyBot extends AbstractBot {
       .compile("(\\S+)(\\+\\+|\\-\\-)\\W*(\\w*.*)");
 
   private static final Pattern SR_RX = Pattern
-      .compile("^s/([^/]+)/([^/]*)/(g?)$");
+      .compile("(\\S+)(\\+\\+|--)($|\\s+(.*))");
 
   static final String NO_SUBSCRIBER = "No such alias or name: %s";
   static final String USER_NO_LONGER_SNOOZING = "%s is no longer snoozing";
@@ -108,7 +108,7 @@ public class PartyBot extends AbstractBot {
     } else if (plusPlusMatcher.find()) {
       String target = plusPlusMatcher.group(1);
       String delta = plusPlusMatcher.group(2);
-      String reason = plusPlusMatcher.group(3);
+      String reason = plusPlusMatcher.group(4);
 
       Message plusPlusResponse = null;
 
