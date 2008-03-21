@@ -65,7 +65,7 @@ public enum Command {
       Pattern.CASE_INSENSITIVE), "/commands - displays this menu",
       new CommandsCommandHandler()),
 
-  SNOOZE(Pattern.compile("/(snooze)\\s*(.*)"), "/snooze time" 
+  SNOOZE(Pattern.compile("/(snooze|sleep)\\s*(.*)"), "/snooze time" 
       + " - ignore this partychat for the specified amount of time. E.g." 
       + "\"snooze 1h\" or \"snooze 15m\"",
       new SnoozeCommandHandler()),
@@ -94,6 +94,7 @@ public enum Command {
       new StatsCommandHandler(), true),
 
   ;
+
 
   final Pattern pattern;
 
