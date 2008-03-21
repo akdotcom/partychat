@@ -235,7 +235,11 @@ public class PlusPlusBot {
     if (!hasLetters) {
       return null;
     }
-    
+
+    // Make sure the reason is not null, so we don't have to keep checking in
+    // the future
+    reason = (reason == null) ? "" : reason;
+
     // Log the event
     try {
       logEvent(from, chat, target, reason, increment);
