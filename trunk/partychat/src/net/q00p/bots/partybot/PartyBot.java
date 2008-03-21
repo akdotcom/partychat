@@ -39,7 +39,7 @@ public class PartyBot extends AbstractBot {
   private final PlusPlusBot plusPlusBot;
 
   private static final Pattern PLUSPLUS_RX = Pattern
-      .compile("(\\S+)(\\+\\+|--)($|\\s+(.*))");
+      .compile("(\\S+)(\\+\\+|--)(\\s+(.*))?$");
 
   private static final Pattern SR_RX = Pattern
       .compile("^s/([^/]+)/([^/]*)/(g?)$");
