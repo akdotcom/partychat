@@ -17,7 +17,7 @@
 
 = Running =
   # *Run* menu -> *Run configurations...*
-  # Under *Java Application* select *PartyBot*
+  # Under *Java Application* select *!PartyBot*
   # In the *Arguments* tab, enter (at least) three arguments
     * botname: can be anything
     * username: if just a username, will be considered to be a `gmail.com` Jabber account, otherwise everything after the @ sign is the Jabber server
