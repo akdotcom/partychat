@@ -8,4 +8,4 @@
     # Add a new source `http://subclipse.tigris.org/update_1.6.x`
     # Install all components
   # *Window* menu -> *Open Perspective* -> *SVN Repository Exploring*
-  # Add a repository with the URL `https://partychat.googlecode.com`
+  # Add a repository with the URL `https://partychat.googlecode.com/svn`
