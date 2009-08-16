@@ -1,11 +1,25 @@
 #summary Getting started with partychat development (with Eclipse)
+#labels Featured
 
-= Introduction =
+= Installation =
 
   # [http://www.eclipse.org/downloads/ Download Eclipse] (Java IDE version)
   # Install [http://subclipse.tigris.org/servlets/ProjectProcess?pageID=p4wYuA subclipse] for SVN port
     # *Help* menu -> *Install New Software...*
     # Add a new source `http://subclipse.tigris.org/update_1.6.x`
     # Install all components
+
+= Getting the code =
+
   # *Window* menu -> *Open Perspective* -> *SVN Repository Exploring*
   # Add a repository with the URL `https://partychat.googlecode.com/svn`
+  # Check out the `trunk/partychat` directory
+
+= Running =
+  # *Run* menu -> *Run configurations...*
+  # Under *Java Application* select *PartyBot*
+  # In the *Arguments* tab, enter (at least) three arguments
+    * botname: can be anything
+    * username: if just a username, will be considered to be a `gmail.com` Jabber account, otherwise everything after the @ sign is the Jabber server
+    * password: that account's password
+  # Multiple username/password pairs may be repeated to connect to multiple bots
