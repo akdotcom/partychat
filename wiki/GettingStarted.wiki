@@ -1,0 +1,11 @@
+#summary Getting started with partychat development (with Eclipse)
+
+= Introduction =
+
+  # [http://www.eclipse.org/downloads/ Download Eclipse] (Java IDE version)
+  # Install [http://subclipse.tigris.org/servlets/ProjectProcess?pageID=p4wYuA subclipse] for SVN port
+    # *Help* menu -> *Install New Software...*
+    # Add a new source `http://subclipse.tigris.org/update_1.6.x`
+    # Install all components
+  # *Window* menu -> *Open Perspective* -> *SVN Repository Exploring*
+  # Add a repository with the URL `https://partychat.googlecode.com`
