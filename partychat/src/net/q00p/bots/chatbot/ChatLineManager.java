@@ -13,10 +13,6 @@ public class ChatLineManager {
 	
 	/**
 	 * Convenience method that retrieves a chat line with the specified name.
-	 * 
-	 * TODO make this more efficient
-	 * @param name
-	 * @return
 	 */
 	public ChatLine getChatLine(String name) {
 		for(ChatLine line : chatLines) {
@@ -29,10 +25,6 @@ public class ChatLineManager {
 	 * Convenience method that retrieves a chat line with the specified subscriber
 	 * in it. If multiple chat lines have the same subscriber 
 	 * (which should not happen), the line returned will be arbitrary.
-	 * 
-	 * TODO make this more efficient
-	 * @param name
-	 * @return
 	 */
 	public ChatLine getChatLine(Subscriber subscriber) {
 		if (subscriber == null) return null;

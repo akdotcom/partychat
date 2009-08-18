@@ -5,8 +5,6 @@ import net.q00p.bots.chatbot.ChatContext;
 
 public class SubscriptionListener implements ChatListener {
 
-	private boolean filter(){return true;}
-	
 	public void handleMessage(Message message, ChatContext chatContext) {
 		// TODO Auto-generated method stub
 

@@ -10,8 +10,7 @@ import net.q00p.bots.util.AbstractBot;
 import net.q00p.bots.util.DateUtil;
 import net.q00p.bots.util.FutureTask;
 
-import com.google.common.collect.Sets;
-
+import com.google.common.collect.ImmutableSet;
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
 import java.io.BufferedInputStream;
@@ -61,7 +60,7 @@ public class PartyBot extends AbstractBot {
   static final String SR_OUTPUT = "%s meant _%s_";
 
   // TODO(ak): load administrators from a config file  
-  private static final Set<String> ADMINISTRATORS = Sets.immutableSet(
+  private static final Set<String> ADMINISTRATORS = ImmutableSet.of(
     "apatil@gmail.com",
     "mbolin@gmail.com",
     "ak@q00p.net",
@@ -84,6 +83,7 @@ public class PartyBot extends AbstractBot {
     // minutes.
   }
 
+  @Override
   public void handleMessage(Message message) {
     Subscriber subscriber = Subscriber.get(message.getFrom(), message.getTo()
         .getName());
@@ -267,10 +267,6 @@ public class PartyBot extends AbstractBot {
 
   /**
    * Sends a message from the system.
-   * 
-   * @param partyLine
-   * @param message
-   * @return
    */
   String announce(PartyLine partyLine, String message) {
     if (partyLine == null) {
@@ -331,6 +327,7 @@ public class PartyBot extends AbstractBot {
       this.manager = managedClass;
     }
 
+    @Override
     public void run() {
       Logger.log("saving state...");
       String xmlfilename = "state.xml";

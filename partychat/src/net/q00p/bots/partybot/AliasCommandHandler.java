@@ -10,6 +10,7 @@ public class AliasCommandHandler extends PartyLineCommandHandler {
   private static final String SUB_ALIAS_CHANGE = "%s is now known as %s";
   private static final String SUB_ALIAS_CHANGE_HAD_PREVIOUS = "%s (%s) is now known as %s";
 
+  @Override
   public String doCommand(
       PartyBot partyBot,
       PartyLine partyLine,

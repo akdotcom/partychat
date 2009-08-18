@@ -74,7 +74,8 @@ public class Connection implements MessageSender {
 	      Logger.log(bot.botName() + " added to " + toString(), true);
 	}
 	
-	public String toString() {
+	@Override
+    public String toString() {
 		return connection.getUser() + ":" + connection.getServiceName() + ":" +
 			connection.getConnectionID();
 	}

@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 
 public class MailCommandHandler extends PartyLineCommandHandler {
 
+  @Override
   public String doCommand(
       PartyBot partyBot,
       PartyLine partyLine,

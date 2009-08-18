@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 
 public class MeCommandHandler extends PartyLineCommandHandler {
 
+  @Override
   public String doCommand(PartyBot partyBot, PartyLine partyLine,
       Subscriber subscriber, Matcher commandMatcher) {
     String actionCast = "_" + subscriber.getDisplayName(true) + " "

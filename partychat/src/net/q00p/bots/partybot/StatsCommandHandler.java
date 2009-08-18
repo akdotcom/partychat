@@ -1,8 +1,8 @@
 package net.q00p.bots.partybot;
 
 import com.google.common.collect.Multiset;
-import com.google.common.collect.Multisets;
 import com.google.common.collect.Sets;
+import com.google.common.collect.TreeMultiset;
 
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -103,7 +103,7 @@ public class StatsCommandHandler implements CommandHandler {
       .append("\n");
     
     // Bot stats
-    Multiset<String> botCounts = Multisets.newTreeMultiset();
+    Multiset<String> botCounts = TreeMultiset.create();
     for (PartyLine line : lineManager.linesByName.values()) {
       for (Subscriber s : line.getSubscribers()) {
         botCounts.add(s.getBotScreenName().toLowerCase());
