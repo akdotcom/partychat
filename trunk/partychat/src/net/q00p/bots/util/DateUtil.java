@@ -50,10 +50,8 @@ public final class DateUtil {
    * Tries to return milliseconds from a user entered string like 10m or 10s or
    * 10h or just 10. A bare number is interpreted as seconds.
    * 
-   * @param text
    * @throws ParseException on several conditions - we try not to return a 
    *         number at all if the input is malformed.
-   * @return
    */
   public static long parseTime(String text) throws ParseException {
     NumberFormat nf = NumberFormat.getInstance(Locale.ENGLISH);
@@ -132,9 +130,6 @@ public final class DateUtil {
   /**
    * Return a string form of a ms.
    * Something like 10m or 10s or 10d with loss of precision.
-   * 
-   * @param ms
-   * @return
    */
   public static String prettyFormatTime(long ms) {
     StringBuilder sb = new StringBuilder();

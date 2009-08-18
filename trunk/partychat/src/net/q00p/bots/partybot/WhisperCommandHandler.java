@@ -9,6 +9,7 @@ public class WhisperCommandHandler extends PartyLineCommandHandler {
 
   private static final String PRIVATE_MESSAGE_FORMAT = "[%s to just you] %s";
   
+  @Override
   public String doCommand(PartyBot partyBot, PartyLine partyLine,
       Subscriber subscriber, Matcher commandMatcher) {
     String alias = commandMatcher.group(2);

@@ -11,6 +11,7 @@ public class EchoBot extends AbstractBot {
 	
 	EchoBot(String name) {super(name);}
 	
+	@Override
 	public void handleMessage(Message message) {
 		getMessageSender().sendMessage(
 				message.reply("[" + message.getFrom().getName() + "] " 

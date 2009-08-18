@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 
 public class ListCommandHandler extends PartyLineCommandHandler {
 
+  @Override
   public String doCommand(
       PartyBot partyBot,
       PartyLine partyLine,

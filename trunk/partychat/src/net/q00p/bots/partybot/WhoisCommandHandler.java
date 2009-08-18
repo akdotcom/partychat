@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 
 public class WhoisCommandHandler extends PartyLineCommandHandler {
 
+  @Override
   public String doCommand(PartyBot partyBot, PartyLine partyLine,
       Subscriber subscriber, Matcher commandMatcher) {
     // Find a subscriber with that alias or "name".

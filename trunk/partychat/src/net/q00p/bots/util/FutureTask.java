@@ -104,8 +104,8 @@ public class FutureTask {
     
     // Ugh, we want to spin until all the tasks are done...
     // Ugh!
-    while (ft.hasMoreTasks());
-    Thread.currentThread().sleep(2000);
+    while (ft.hasMoreTasks()) {}
+    Thread.sleep(2000);
     
     boolean passed = true;
     for (int i = 0; i < 100; ++i) {

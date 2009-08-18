@@ -52,7 +52,9 @@ public class Message {
 		Matcher matcher = HTML_PATTERN.matcher(s);
 	    	return matcher.replaceAll("");
 	}	
-	public String toString() {
+	
+	@Override
+    public String toString() {
 		return from + " --> " + to + " : " + content;
 	}
 }

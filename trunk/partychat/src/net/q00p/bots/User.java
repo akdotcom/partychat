@@ -67,14 +67,17 @@ public class User implements Comparable<User>, Serializable {
 		return client;
 	}
 		
+	@Override
 	public boolean equals(Object obj) {
 		return (obj != null && obj instanceof User && ((User)obj).name.equals(name));
 	}
 	
+	@Override
 	public int hashCode() {
 		return name.hashCode();
 	}
 	
+	@Override
 	public String toString() {
 		return nameClient;
 	}

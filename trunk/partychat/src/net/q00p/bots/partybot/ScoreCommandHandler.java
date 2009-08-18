@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 
 public class ScoreCommandHandler extends PartyLineCommandHandler {
 
+  @Override
   public String doCommand(PartyBot partyBot, PartyLine partyLine,
       Subscriber subscriber, Matcher commandMatcher) {
     String regex = commandMatcher.group(2);
