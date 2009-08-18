@@ -2,6 +2,9 @@
 
 package net.q00p.bots.partybot;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+
 import net.q00p.bots.Message;
 
 import java.io.BufferedReader;
@@ -14,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -46,14 +48,15 @@ public class PlusPlusBot {
     "  %s by %s%s";
   
   /**
-   * Things that can't be ++d
+   * Things that can't be ++d. For now, hard-code the most obvious unintentional
+   * targets.
    */
-  private final Set<String> blacklistedTargets;
+  private final Set<String> BLACKLISTED_TARGETS = ImmutableSet.of("c");
   
   /**
    * chat -> {targetscore}
    */
-  private final Map<String, Map<String, Score>> scoreBoard;
+  private final Map<String, Map<String, Score>> scoreBoard = Maps.newHashMap();
   
   private static class Score implements Comparable<Score> {
     private final String target;
@@ -140,11 +143,6 @@ public class PlusPlusBot {
   private BufferedWriter logFile;
   
   public PlusPlusBot() {
-    blacklistedTargets = new HashSet<String>();
-    // For now, hard-code the most obvious unintentional targets
-    blacklistedTargets.add("c");
-    
-    scoreBoard = new HashMap<String, Map<String, Score>>();
     try {
       logFile = prepareAndLoadLog("ppblog");
     } catch (IOException e) {
@@ -218,7 +216,7 @@ public class PlusPlusBot {
     target = target.toLowerCase();
     
     // Skip the blacklist
-    if (blacklistedTargets.contains(target)) {
+    if (BLACKLISTED_TARGETS.contains(target)) {
       return null;
     }
     
