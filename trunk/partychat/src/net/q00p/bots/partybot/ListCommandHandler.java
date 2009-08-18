@@ -2,6 +2,8 @@ package net.q00p.bots.partybot;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+
+import java.util.Collection;
 import java.util.regex.Matcher;
 
 public class ListCommandHandler extends PartyLineCommandHandler {
@@ -23,10 +25,23 @@ public class ListCommandHandler extends PartyLineCommandHandler {
     }
     
     for (String name : subscribersByName.keySet()) {
-      sb.append(name).append(":\n");
+      sb.append(name).append(":");
+      
+      Collection<Subscriber> subscribers = subscribersByName.get(name);
+      boolean isCompact = subscribers.size() == 1; 
+      
+      if (isCompact) {
+        sb.append(" ");
+      } else {
+        sb.append("\n");
+      }
       
       for (Subscriber sub : subscribersByName.get(name)) {
-        sb.append("  using ")
+        if (!isCompact) {
+          sb.append("  ");
+        }
+        
+        sb.append("using ")
           .append(sub.getBotScreenName().toLowerCase());
 
         if (sub.getAlias() != null) {
