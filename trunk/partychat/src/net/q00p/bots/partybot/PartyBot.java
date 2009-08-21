@@ -10,6 +10,7 @@ import net.q00p.bots.util.AbstractBot;
 import net.q00p.bots.util.DateUtil;
 import net.q00p.bots.util.FutureTask;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
@@ -27,37 +28,24 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 
-public class PartyBot extends AbstractBot {
+public class PartyBot extends AbstractBot implements MessageResponder {
   private final LineManager lineManager;
   private final Timer timer;
   private final StateSaver sh;
   private final PlusPlusBot plusPlusBot;
 
-  private static final Pattern PLUSPLUS_RX = Pattern
-      .compile("(\\S+)(\\+\\+|--)(\\s+(.*))?$");
-
-  private static final Pattern SR_RX = Pattern
-      .compile("^s/([^/]+)/([^/]*)/(g?)$");
-
   static final String NO_SUBSCRIBER = "No such alias or name: %s";
-  static final String USER_NO_LONGER_SNOOZING = "%s is no longer snoozing";
   static final String MESSAGE_FORMAT = "[%s] %s";
   static final String IGNORE_MESSAGE_FORMAT = "[%s to all but %s] %s";
 
   static final String UKNOWN_COMMAND = "'%s' is not a recognized "
       + "command, type '" + Command.COMMANDS.getShortName()
       + "' for a list of possible commands " + "and their uses.";
-  static final String NEED_HELP = "you are not in a party chat, for help "
-      + "using PartyChat, type '" + Command.HELP.getShortName() + "'";
   static final String SUB_STATUS_ONLINE = "you are currently in party chat #%s"
       + " as %s";
   static final String SUB_STATUS_OFFLINE = "you are not in a party chat";
-
-  static final String SR_OUTPUT = "%s meant _%s_";
 
   // TODO(ak): load administrators from a config file  
   private static final Set<String> ADMINISTRATORS = ImmutableSet.of(
@@ -68,13 +56,20 @@ public class PartyBot extends AbstractBot {
   );
 
   private final FutureTask futureTask = new FutureTask();
+  
+  private final List<? extends MessageHandler> messageHandlers;
 
   private PartyBot(String name) {
     super(name);
     lineManager = loadState();
 
     plusPlusBot = new PlusPlusBot();
-
+    
+    messageHandlers = ImmutableList.of(
+        new PlusPlusBot.MessageHandler(plusPlusBot),
+        new SearchReplaceMessageHandler(),
+        new BroadcastMessageHandler()
+    );
     sh = new StateSaver(lineManager);
     Runtime.getRuntime().addShutdownHook(new Thread(sh));
 
@@ -85,132 +80,38 @@ public class PartyBot extends AbstractBot {
 
   @Override
   public void handleMessage(Message message) {
-    Subscriber subscriber = Subscriber.get(message.getFrom(), message.getTo()
-        .getName());
-
-    String output = null;
-    PartyLine partyLine = lineManager.getPartyLine(subscriber);
-
-    boolean isCommand = false;
+    Subscriber subscriber = 
+        Subscriber.get(message.getFrom(), message.getTo().getName());
 
     String content = message.getPlainContent();
+
     Command command = Command.isCommand(content);
-    Matcher plusPlusMatcher = PLUSPLUS_RX.matcher(content);
-    Matcher replaceMatcher = SR_RX.matcher(content);
     if (command != null) {
-      CommandHandler handler = command.handler;
+      CommandHandler commandHandler = command.handler;
       Matcher commandMatcher = command.pattern.matcher(content);
       // need to run matches() before CommandHandler can access groups()
       boolean doesMatch = commandMatcher.matches();
       assert doesMatch;
-      output = handler.doCommand(this, lineManager, subscriber, commandMatcher);
-      isCommand = true;
-    } else if (plusPlusMatcher.find()) {
-      String target = plusPlusMatcher.group(1);
-      String delta = plusPlusMatcher.group(2);
-      String reason = plusPlusMatcher.group(4);
-
-      Message plusPlusResponse = null;
-
-      if ("++".equals(delta)) {
-        plusPlusResponse = plusPlusBot.increment(message, partyLine.getName(),
-            target, reason);
-      } else {
-        plusPlusResponse = plusPlusBot.decrement(message, partyLine.getName(),
-            target, reason);
+      String commandOutput = commandHandler.doCommand(
+          this, lineManager, subscriber, commandMatcher);
+      if (commandOutput != null) {
+        reply(message, commandOutput);
       }
-
-      // broadcast whatever they just said
-      broadcast(subscriber, partyLine, message);
-
-      if (plusPlusResponse != null) {
-        // TODO(dolapo): share this. ak is rushing meee! who knows if this
-        // works?
-        User plusPlus = User.get("plusplusbot", "bot");
-        Subscriber botSubscriber = Subscriber.get(plusPlus, "");
-        output = broadcast(botSubscriber, partyLine, plusPlusResponse
-            .getContent(), true);
-      }
-
-    } else if (replaceMatcher.find()) {
-      broadcast(subscriber, partyLine, message);
-      String replAnnouncement = attemptSearchReplace(subscriber, replaceMatcher
-          .group(1), replaceMatcher.group(2), content.endsWith("g"));
-      if (replAnnouncement != null) {
-        announce(partyLine, replAnnouncement);
-      } else {
-        // This may not be the right thing to do here.
-        output = "Malformed search replace. Try s/old/new/";
-      }
-    } else {
-      // must be broadcasting
-      if (partyLine != null) {
-        output = broadcast(subscriber, partyLine, message);
-        subscriber.setLastActivityTime(System.currentTimeMillis());
-        subscriber.addMessageToHistory(message);
-      } else {
-        output = NEED_HELP;
-      }
+      return;
     }
 
-    // If it wasn't a command and they were snoozing, bring em back.
-    if (subscriber.isSnoozing() && !isCommand && partyLine != null) {
-      subscriber.setSnoozeUntil(0);
-      announce(partyLine, String.format(USER_NO_LONGER_SNOOZING, subscriber
-          .getUser().getName()));
-    }
-
-    if (output != null) getMessageSender().sendMessage(message.reply(output));
-  }
-
-  /**
-   * Looks back 2 items in the user's history for any message containing
-   * 'search'. If found replaces it with 'replace' and returns the new message.
-   */
-  private String attemptSearchReplace(Subscriber subscriber, String search,
-      String replace, boolean global) {
-    if (subscriber == null) {
-      return null;
-    }
-
-    Pattern searchPattern;
-
-    try {
-      searchPattern = Pattern.compile(search);
-    } catch (PatternSyntaxException e) {
-      // Don't let the user put in crappy patterns.
-      // TODO(dolapo): Also, we should probably let them know they did something
-      // wrong.
-      return null;
-    }
-
-    List<SubscriberHistory.HistoryItem> history = subscriber.getHistoryItems();
-    int historySize = history.size();
-
-    String intent = null;
-    // Loop through the history backwards, since presumably the user wants to
-    // correct a more recent message
-    for (int i = historySize - 1; i >= 0 && i > historySize - 3; --i) {
-      String original = history.get(i).getMessage().getContent();
-      Matcher searchMatcher = searchPattern.matcher(original);
-      if (searchMatcher.find()) {
-        // Handle /g correctly.
-        if (global) {
-          intent = searchMatcher.replaceAll(replace);
-        } else {
-          intent = searchMatcher.replaceFirst(replace);
+    PartyLine partyLine = lineManager.getPartyLine(subscriber);
+    
+    for (MessageHandler messageHandler : messageHandlers) {
+      if (messageHandler.canHandle(message)) {
+        if (messageHandler.shouldBroadcastOriginalMessage()) {
+          broadcast(subscriber, partyLine, message);          
         }
-        
-        // Stop looking for a match now that we've found one
+        messageHandler.handle(message, subscriber, partyLine, this);
         break;
       }
     }
-    if (intent == null) {
-      return null;
-    }
-
-    return String.format(SR_OUTPUT, subscriber.getDisplayName(), intent);
-  }
+  }  
 
   FutureTask getFutureTask() {
     return futureTask;
@@ -236,10 +137,8 @@ public class PartyBot extends AbstractBot {
 
   /**
    * subscriber - can be null.
-   * 
-   * @return message you want sent back to the broadcaster/subscriber
    */
-  String broadcast(Subscriber subscriber, PartyLine partyLine, String content,
+  void broadcast(Subscriber subscriber, PartyLine partyLine, String content,
       boolean isSystem) {
     if (!isSystem)
       content = String.format(MESSAGE_FORMAT, subscriber.getDisplayName(),
@@ -257,23 +156,23 @@ public class PartyBot extends AbstractBot {
         getMessageSender().sendMessage(msg);
       }
     }
-
-    return null;
   }
 
-  String broadcast(Subscriber subscriber, PartyLine partyLine, Message message) {
-    return broadcast(subscriber, partyLine, message.getContent(), false);
+  public void broadcast(
+      Subscriber subscriber, PartyLine partyLine, Message message) {
+    broadcast(subscriber, partyLine, message.getContent(), false);
   }
 
-  /**
-   * Sends a message from the system.
-   */
-  String announce(PartyLine partyLine, String message) {
-    if (partyLine == null) {
-      // Do nothing if there's somehow no partyline
-      return null;
+
+  public void reply(Message inReplyTo, String message) {
+    getMessageSender().sendMessage(inReplyTo.reply(message));
+  }
+
+  public void announce(PartyLine partyLine, String message) {
+    // Do nothing if there's somehow no partyline
+    if (partyLine != null) {
+      broadcast(null, partyLine, message, true);
     }
-    return broadcast(null, partyLine, message, true);
   }
 
   String getStatus(Subscriber sub) {
