@@ -1,7 +1,12 @@
-package net.q00p.bots.partybot;
+package net.q00p.bots.partybot.commands;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+
+import net.q00p.bots.partybot.PartyBot;
+import net.q00p.bots.partybot.PartyLine;
+import net.q00p.bots.partybot.Subscriber;
+import net.q00p.bots.util.DateUtil;
 
 import java.util.Collection;
 import java.util.regex.Matcher;
@@ -50,13 +55,13 @@ public class ListCommandHandler extends PartyLineCommandHandler {
 
         if (sub.isSnoozing()) {
           sb.append(" snoozing for ")
-            .append(PartyBot.timeTill(sub.getSnoozeUntil()));
+            .append(DateUtil.timeTill(sub.getSnoozeUntil()));
         }
 
 
         if (sub.getLastActivityTime() > 0) {
           sb.append(" last seen ")
-            .append(PartyBot.timeSince(sub.getLastActivityTime()))
+            .append(DateUtil.timeSince(sub.getLastActivityTime()))
             .append(" ago");
         }
         

@@ -1,6 +1,10 @@
-package net.q00p.bots.partybot;
+package net.q00p.bots.partybot.commands;
 
 import com.google.common.collect.Sets;
+
+import net.q00p.bots.partybot.PartyBot;
+import net.q00p.bots.partybot.PartyLine;
+import net.q00p.bots.partybot.Subscriber;
 
 import java.util.Set;
 import java.util.regex.Matcher;

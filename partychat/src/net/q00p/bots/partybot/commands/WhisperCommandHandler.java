@@ -1,7 +1,10 @@
-package net.q00p.bots.partybot;
+package net.q00p.bots.partybot.commands;
 
 import net.q00p.bots.Message;
 import net.q00p.bots.User;
+import net.q00p.bots.partybot.PartyBot;
+import net.q00p.bots.partybot.PartyLine;
+import net.q00p.bots.partybot.Subscriber;
 
 import java.util.regex.Matcher;
 
@@ -21,7 +24,7 @@ public class WhisperCommandHandler extends PartyLineCommandHandler {
     // themselves.
     Subscriber to = partyBot.findSubscriber(partyLine, alias);
     if (to == null) {
-      return String.format(PartyBot.NO_SUBSCRIBER, alias);
+      return String.format(NO_SUBSCRIBER, alias);
     }
 
     Message whispermsg = new Message(User.get(to.getBotScreenName(),

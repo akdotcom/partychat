@@ -1,9 +1,14 @@
-package net.q00p.bots.partybot;
+package net.q00p.bots.partybot.commands;
 
 import com.google.common.collect.Lists;
 
+import net.q00p.bots.partybot.LineManager;
+import net.q00p.bots.partybot.PartyBot;
+import net.q00p.bots.partybot.Subscriber;
+
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -96,13 +101,13 @@ public enum Command {
   ;
 
 
-  final Pattern pattern;
+  private final Pattern pattern;
 
   final String documentation;
 
   final boolean notPublic;
 
-  final CommandHandler handler;
+  private final CommandHandler handler;
 
   Command(Pattern pattern, String documentation, CommandHandler handler) {
     this(pattern, documentation, handler, false);
@@ -119,6 +124,18 @@ public enum Command {
   /** @return the short name of the command, such as "/score" */
   public String getShortName() {
     return "/" + this.name().toLowerCase();
+  }
+  
+  public String run(
+      PartyBot partyBot,
+      LineManager lineManager,
+      Subscriber subscriber, 
+      String content) {
+    Matcher matcher = pattern.matcher(content);
+    // need to run matches() before CommandHandler can access groups()
+    boolean doesMatch = matcher.matches();
+    assert doesMatch;
+    return handler.doCommand(partyBot, lineManager, subscriber, matcher);
   }
 
   /**
