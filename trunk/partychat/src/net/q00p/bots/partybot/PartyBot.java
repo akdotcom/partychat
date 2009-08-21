@@ -4,14 +4,16 @@ import net.q00p.bots.Bot;
 import net.q00p.bots.Message;
 import net.q00p.bots.User;
 import net.q00p.bots.io.Logger;
+import net.q00p.bots.partybot.commands.Command;
 import net.q00p.bots.partybot.marshal.PartyLineBean;
 import net.q00p.bots.partybot.marshal.SubscriberBean;
 import net.q00p.bots.util.AbstractBot;
-import net.q00p.bots.util.DateUtil;
 import net.q00p.bots.util.FutureTask;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
 import java.io.BufferedInputStream;
@@ -22,12 +24,10 @@ import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.regex.Matcher;
 
 
 public class PartyBot extends AbstractBot implements MessageResponder {
@@ -36,13 +36,8 @@ public class PartyBot extends AbstractBot implements MessageResponder {
   private final StateSaver sh;
   private final PlusPlusBot plusPlusBot;
 
-  static final String NO_SUBSCRIBER = "No such alias or name: %s";
   static final String MESSAGE_FORMAT = "[%s] %s";
-  static final String IGNORE_MESSAGE_FORMAT = "[%s to all but %s] %s";
 
-  static final String UKNOWN_COMMAND = "'%s' is not a recognized "
-      + "command, type '" + Command.COMMANDS.getShortName()
-      + "' for a list of possible commands " + "and their uses.";
   static final String SUB_STATUS_ONLINE = "you are currently in party chat #%s"
       + " as %s";
   static final String SUB_STATUS_OFFLINE = "you are not in a party chat";
@@ -87,13 +82,8 @@ public class PartyBot extends AbstractBot implements MessageResponder {
 
     Command command = Command.isCommand(content);
     if (command != null) {
-      CommandHandler commandHandler = command.handler;
-      Matcher commandMatcher = command.pattern.matcher(content);
-      // need to run matches() before CommandHandler can access groups()
-      boolean doesMatch = commandMatcher.matches();
-      assert doesMatch;
-      String commandOutput = commandHandler.doCommand(
-          this, lineManager, subscriber, commandMatcher);
+      String commandOutput =
+          command.run(this, lineManager, subscriber, content);
       if (commandOutput != null) {
         reply(message, commandOutput);
       }
@@ -113,7 +103,7 @@ public class PartyBot extends AbstractBot implements MessageResponder {
     }
   }  
 
-  FutureTask getFutureTask() {
+  public FutureTask getFutureTask() {
     return futureTask;
   }
 
@@ -124,7 +114,7 @@ public class PartyBot extends AbstractBot implements MessageResponder {
    * @param aliasOrName
    * @return The Subscriber or null.
    */
-  Subscriber findSubscriber(PartyLine partyLine, String aliasOrName) {
+  public Subscriber findSubscriber(PartyLine partyLine, String aliasOrName) {
     for (Subscriber sub : partyLine.getSubscribers()) {
       if (aliasOrName.equals(sub.getAlias())
           || aliasOrName.equals(sub.getUser().getName())) {
@@ -138,7 +128,7 @@ public class PartyBot extends AbstractBot implements MessageResponder {
   /**
    * subscriber - can be null.
    */
-  void broadcast(Subscriber subscriber, PartyLine partyLine, String content,
+  public void broadcast(Subscriber subscriber, PartyLine partyLine, String content,
       boolean isSystem) {
     if (!isSystem)
       content = String.format(MESSAGE_FORMAT, subscriber.getDisplayName(),
@@ -175,7 +165,7 @@ public class PartyBot extends AbstractBot implements MessageResponder {
     }
   }
 
-  String getStatus(Subscriber sub) {
+  public String getStatus(Subscriber sub) {
     PartyLine partyLine = lineManager.getPartyLine(sub);
     if (partyLine == null) {
       return SUB_STATUS_OFFLINE;
@@ -185,20 +175,11 @@ public class PartyBot extends AbstractBot implements MessageResponder {
     }
   }
 
-  /** Prints how long till the given time */
-  static String timeTill(long futureTimeMs) {
-    return DateUtil.prettyFormatTime(futureTimeMs - System.currentTimeMillis());
-  }
-
-  static String timeSince(long pastTimeMs) {
-    return DateUtil.prettyFormatTime(System.currentTimeMillis() - pastTimeMs);
-  }
-
-  String printScore(String chat, String regex, boolean showReasons) {
+  public String printScore(String chat, String regex, boolean showReasons) {
     return plusPlusBot.getScores(chat, regex, showReasons);
   }
 
-  String saveState(Subscriber subscriber) {
+  public String saveState(Subscriber subscriber) {
     String user = subscriber.getUser().getName();
     if (ADMINISTRATORS.contains(user)) {
       sh.run();
@@ -231,14 +212,14 @@ public class PartyBot extends AbstractBot implements MessageResponder {
       Logger.log("saving state...");
       String xmlfilename = "state.xml";
       try {
-        Collection<PartyLine> blah = lineManager.linesByName.values();
-        Collection<PartyLineBean> blah2 = new HashSet<PartyLineBean>();
-        for (PartyLine pl : blah) {
-          blah2.add(new PartyLineBean(pl));
+        Collection<PartyLine> partyLines = lineManager.getPartyLines();
+        Collection<PartyLineBean> partyLinesBeans = Sets.newHashSet();
+        for (PartyLine partyLine : partyLines) {
+          partyLinesBeans.add(new PartyLineBean(partyLine));
         }
         XMLEncoder e = new XMLEncoder(new BufferedOutputStream(
             new FileOutputStream(xmlfilename)));
-        e.writeObject(blah2);
+        e.writeObject(partyLinesBeans);
         e.close();
         Logger.log("State successfully stored to " + xmlfilename);
       } catch (Exception e) {

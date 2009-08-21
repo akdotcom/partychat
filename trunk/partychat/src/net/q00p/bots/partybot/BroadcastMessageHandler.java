@@ -1,6 +1,7 @@
 package net.q00p.bots.partybot;
 
 import net.q00p.bots.Message;
+import net.q00p.bots.partybot.commands.Command;
 
 /**
  * Baseline {@link MessageHandler} which broadcasts all messages to the user's

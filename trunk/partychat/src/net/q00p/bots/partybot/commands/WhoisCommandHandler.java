@@ -1,4 +1,9 @@
-package net.q00p.bots.partybot;
+package net.q00p.bots.partybot.commands;
+
+import net.q00p.bots.partybot.PartyBot;
+import net.q00p.bots.partybot.PartyLine;
+import net.q00p.bots.partybot.Subscriber;
+import net.q00p.bots.util.DateUtil;
 
 import java.util.regex.Matcher;
 
@@ -14,7 +19,7 @@ public class WhoisCommandHandler extends PartyLineCommandHandler {
       return formatSubscriberInfo(sub);
     }
     // Sorry, no such subscriber.
-    return String.format(PartyBot.NO_SUBSCRIBER, alias);
+    return String.format(NO_SUBSCRIBER, alias);
   }
 
   /**
@@ -31,12 +36,12 @@ public class WhoisCommandHandler extends PartyLineCommandHandler {
 
     if (subscriber.getLineJoinTime() > 0) {
       sb.append("\nMember for ").append(
-          PartyBot.timeSince(subscriber.getLineJoinTime()));
+          DateUtil.timeSince(subscriber.getLineJoinTime()));
     }
 
     if (subscriber.getLastActivityTime() > 0) {
       sb.append("\nLast seen ").append(
-          PartyBot.timeSince(subscriber.getLastActivityTime())).append(" ago");
+          DateUtil.timeSince(subscriber.getLastActivityTime())).append(" ago");
     }
 
     if (subscriber.getHistory().getTotalMessageCount() > 0) {
@@ -51,7 +56,7 @@ public class WhoisCommandHandler extends PartyLineCommandHandler {
 
     if (subscriber.isSnoozing()) {
       sb.append("\nSnoozing for "
-          + PartyBot.timeTill(subscriber.getSnoozeUntil()));
+          + DateUtil.timeTill(subscriber.getSnoozeUntil()));
     }
     return sb.toString();
   }

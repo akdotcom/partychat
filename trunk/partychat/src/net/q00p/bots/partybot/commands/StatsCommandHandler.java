@@ -1,9 +1,15 @@
-package net.q00p.bots.partybot;
+package net.q00p.bots.partybot.commands;
 
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.collect.TreeMultiset;
 
+import net.q00p.bots.partybot.LineManager;
+import net.q00p.bots.partybot.PartyBot;
+import net.q00p.bots.partybot.PartyLine;
+import net.q00p.bots.partybot.Subscriber;
+
+import java.util.Collection;
 import java.util.Set;
 import java.util.regex.Matcher;
 
@@ -24,13 +30,15 @@ public class StatsCommandHandler implements CommandHandler {
     long now = System.currentTimeMillis();
     long oneDayCutoff = now - DAY_IN_MS;
     long sevenDayCutoff = now - 7 * DAY_IN_MS;
-    long thirtyDayCutoff = now - 30 * DAY_IN_MS;    
+    long thirtyDayCutoff = now - 30 * DAY_IN_MS;
+    
+    Collection<PartyLine> partyLines = lineManager.getPartyLines();
     
     // Total number of rooms
     sb.append("Party chats:\n");
     
     sb.append("  Total: ")
-      .append(lineManager.linesByName.size())
+      .append(partyLines.size())
       .append("\n");
     
     // Subscriber and room stats
@@ -44,7 +52,7 @@ public class StatsCommandHandler implements CommandHandler {
     int thirtyDayActiveSubscribers = 0;
         
     
-    for (PartyLine line : lineManager.linesByName.values()) {
+    for (PartyLine line : partyLines) {
       int subscribers = line.getSubscribers().size();
       
       totalSubscribers += subscribers;
@@ -69,7 +77,7 @@ public class StatsCommandHandler implements CommandHandler {
         }
       }      
     }
-    double averageSubscribers = totalSubscribers/lineManager.linesByName.size();
+    double averageSubscribers = totalSubscribers/partyLines.size();
     sb.append("  Active in the past day: ")
       .append(oneDayActiveLines.size())
       .append("\n");
@@ -104,7 +112,7 @@ public class StatsCommandHandler implements CommandHandler {
     
     // Bot stats
     Multiset<String> botCounts = TreeMultiset.create();
-    for (PartyLine line : lineManager.linesByName.values()) {
+    for (PartyLine line : partyLines) {
       for (Subscriber s : line.getSubscribers()) {
         botCounts.add(s.getBotScreenName().toLowerCase());
       }

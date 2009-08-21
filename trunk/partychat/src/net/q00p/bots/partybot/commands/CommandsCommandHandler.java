@@ -1,4 +1,8 @@
-package net.q00p.bots.partybot;
+package net.q00p.bots.partybot.commands;
+
+import net.q00p.bots.partybot.LineManager;
+import net.q00p.bots.partybot.PartyBot;
+import net.q00p.bots.partybot.Subscriber;
 
 import java.util.regex.Matcher;
 

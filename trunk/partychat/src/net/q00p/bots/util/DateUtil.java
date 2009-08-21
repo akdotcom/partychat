@@ -175,4 +175,13 @@ public final class DateUtil {
     
     System.out.println("Tests passed");
   }
+
+  /** Prints how long till the given time */
+  public static String timeTill(long futureTimeMs) {
+    return prettyFormatTime(futureTimeMs - System.currentTimeMillis());
+  }
+
+  public static String timeSince(long pastTimeMs) {
+    return prettyFormatTime(System.currentTimeMillis() - pastTimeMs);
+  }
 }
