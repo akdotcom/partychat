@@ -87,6 +87,11 @@ public enum Command {
       "/mail - display all the email addresses of the current party chat, so " +
       "that they can be copied and pasted into an email program",
       new MailCommandHandler()),
+      
+  URLINFO(Pattern.compile("/urlinfo(\\s+)?(.*)"), "/urlinfo [url] - extracts "
+          + "information about a URL (e.g. its title). If no URL is provided, "
+          + "then the most recently mentioned URL is used",
+          new UrlInfoCommandHandler()),
 
   // Hidden commands
       
