@@ -4,8 +4,8 @@ import net.q00p.bots.partybot.MessageResponder;
 import net.q00p.bots.partybot.PartyBot;
 import net.q00p.bots.partybot.PartyLine;
 import net.q00p.bots.partybot.Subscriber;
-import net.q00p.bots.partybot.UrlInfoMessageHandler;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -30,18 +30,19 @@ import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 
 /**
- * Commands that displays information about a URL (currently just the title).
+ * Commands that extracts information about a URL (currently just the title)
+ * and then broadcasts it to the entire party chat.
  *
  * @author mihai.parparita@gmail.com (Mihai Parparita)
  */
-public class UrlInfoCommandHandler extends PartyLineCommandHandler {
+public class ShareCommandHandler extends PartyLineCommandHandler {
   private static final String TITLE_START = "<title>";
   private static final String TITLE_END = "</title>";
 
   private final ExecutorService executor = Executors.newFixedThreadPool(10);
   private final HttpClient httpClient;
   
-  public UrlInfoCommandHandler() {
+  public ShareCommandHandler() {
     HttpParams httpParams = new BasicHttpParams();
     httpParams.setParameter(
         CoreProtocolPNames.USER_AGENT, 
@@ -60,13 +61,21 @@ public class UrlInfoCommandHandler extends PartyLineCommandHandler {
 
   private final class UrlInfoRunnable implements Runnable {
     private final URI uri;
+    private final String annotation;
     private final PartyLine partyLine;
+    private final Subscriber subscriber;
     private final MessageResponder responder;
     
     public UrlInfoRunnable(
-        URI uri, PartyLine partyLine, MessageResponder responder) {
+        URI uri,
+        String annotation,
+        PartyLine partyLine, 
+        Subscriber subscriber,
+        MessageResponder responder) {
       this.uri = uri;
+      this.annotation = annotation;
       this.partyLine = partyLine;
+      this.subscriber = subscriber;
       this.responder = responder;
     }
   
@@ -76,9 +85,7 @@ public class UrlInfoCommandHandler extends PartyLineCommandHandler {
         HttpResponse infoResponse = httpClient.execute(infoGet);
         int statusCode = infoResponse.getStatusLine().getStatusCode(); 
         if (statusCode >= 400) {
-          responder.announce(
-              partyLine, "Got HTTP status code " + statusCode + 
-              " extracting info about " + uri);
+          finishShare(null);
           infoGet.abort();
           return;
         }
@@ -94,11 +101,11 @@ public class UrlInfoCommandHandler extends PartyLineCommandHandler {
             if (titleEnd != -1) {
               String title = infoContent.substring(
                   titleStart + TITLE_START.length(), titleEnd);
-              responder.announce(partyLine, "Title of " + uri + ": " + title);
+              finishShare(StringEscapeUtils.unescapeHtml(title));
               return;
             }
           }
-          responder.announce(partyLine, "No title for " + uri);
+          finishShare(null);
           return;
         }
       } catch (ClientProtocolException err) {
@@ -110,8 +117,26 @@ public class UrlInfoCommandHandler extends PartyLineCommandHandler {
       }
     
       infoGet.abort();
-      responder.announce(
-          partyLine, "Encountered error extracting info about " + uri);
+      finishShare(null);
+    }
+    
+    private void finishShare(String title) {
+      StringBuilder shareAnnounce = new StringBuilder();
+      shareAnnounce.append("_")
+        .append(subscriber.getDisplayName(true))
+        .append(" is sharing ")
+        .append(uri);
+      
+      if (title != null && title.length() > 0) {
+        shareAnnounce.append(" (").append(title).append(")");
+      }
+      
+      if (annotation != null && annotation.length() > 0) {
+        shareAnnounce.append(": ").append(annotation);
+      }
+      
+      shareAnnounce.append("_");
+      responder.announce(partyLine, shareAnnounce.toString());
     }
     
   }
@@ -123,36 +148,34 @@ public class UrlInfoCommandHandler extends PartyLineCommandHandler {
       Subscriber subscriber,
       Matcher commandMatcher) {
     URI uri = null;
-    String urlString = commandMatcher.group(2);
+    String urlString = commandMatcher.group(1);
     if (urlString != null && urlString.length() > 0) {
-      boolean isValid = true;
       try {
         uri = new URI(urlString);
        } catch (URISyntaxException err) { 
          // Malformed URLs are reported below
        }
-       if (uri == null || !UrlInfoMessageHandler.isValidUri(uri)) {
+       if (uri == null || !isValidUri(uri)) {
          return urlString + " is not a valid URL.";         
        }
     } else {
-      uri = UrlInfoMessageHandler.getLastPartyLineUri(partyLine);
-      if (uri == null) {
-        return "No recent URL to get info for.";
-      }
+      return "Must give a URL to share";
     }
-
-    partyBot.broadcast(
-        subscriber, 
-        partyLine, 
-        "_" + subscriber.getDisplayName(true) 
-            + " is getting info for " + uri + "_", 
-        true);
+    
+    String annotation = commandMatcher.group(3);
 
     // Running info extraction in another thread since we don't want to block
     // the bot that's handling this request
-    executor.execute(new UrlInfoRunnable(uri, partyLine, partyBot));
+    executor.execute(new UrlInfoRunnable(
+        uri, annotation, partyLine, subscriber, partyBot));
     
-    return "Extracting info for " + uri;
+    return "Sharing... ";
   }
 
+  private static boolean isValidUri(URI uri) {
+    return uri.isAbsolute()
+        && "http".equals(uri.getScheme())
+        && uri.getAuthority() != null
+        && uri.getAuthority().length() > 0;    
+  }
 }
