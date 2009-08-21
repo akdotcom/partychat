@@ -1,15 +1,20 @@
 package net.q00p.bots.partybot.commands;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.collect.TreeMultiset;
 
+import net.q00p.bots.io.Connection;
+import net.q00p.bots.io.ConnectionFactory;
 import net.q00p.bots.partybot.LineManager;
 import net.q00p.bots.partybot.PartyBot;
 import net.q00p.bots.partybot.PartyLine;
 import net.q00p.bots.partybot.Subscriber;
+import net.q00p.bots.util.DateUtil;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 
@@ -112,19 +117,37 @@ public class StatsCommandHandler implements CommandHandler {
     
     // Bot stats
     Multiset<String> botCounts = TreeMultiset.create();
+    Map<String, Long> botLastActivityTimes = Maps.newHashMap();
     for (PartyLine line : partyLines) {
       for (Subscriber s : line.getSubscribers()) {
         botCounts.add(s.getBotScreenName().toLowerCase());
       }
     }
+    
+    for (Connection connection :
+      ConnectionFactory.getConnectionManager().getConnections()) {
+      String connectionUser = connection.getSendingUser();
+      botLastActivityTimes.put(
+          connectionUser.split("/")[0],
+          connection.getLastActivityTime());
+    }
+    
     sb.append("\nBot stats:\n");
     for (String botScreenName : botCounts.elementSet()) {
       sb.append("  ")
         .append(botScreenName)
-        .append(": ")
+        .append(":\n    ")
         .append(botCounts.count(botScreenName))
-        .append(" subscribers")
-        .append("\n");
+        .append(" subscribers");
+      
+      if (botLastActivityTimes.containsKey(botScreenName) &&
+          botLastActivityTimes.get(botScreenName) > 0) {
+        sb.append("\n    last message received ")
+          .append(DateUtil.timeSince(botLastActivityTimes.get(botScreenName)))
+          .append(" ago");
+      }
+      
+        sb.append("\n");
     }
     
     return sb.toString();

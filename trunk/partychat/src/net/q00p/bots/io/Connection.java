@@ -36,6 +36,8 @@ public class Connection implements MessageSender {
   private final Queue<Message> messagesToSend;
   private final Timer timer = new Timer();
   private final Map<User, Chat> chats = new HashMap<User, Chat>();
+  
+  private long lastActivityTime = 0;
 
   protected Connection(XMPPConnection con) {
     connection = con;
@@ -44,6 +46,13 @@ public class Connection implements MessageSender {
     messagesToSend = new LinkedList<Message>();
     timer.schedule(new SendMessageTask(), new Date(), 10);
     Logger.log("Connection: " + this.toString() + " created", true);
+    connection.addPacketListener(
+        new PacketListener() {
+          public void processPacket(Packet arg0) {
+            lastActivityTime = System.currentTimeMillis();
+          }
+        }, 
+        new MessageTypeFilter(org.jivesoftware.smack.packet.Message.Type.chat));
   }
 
   public String getSendingUser() {
@@ -88,6 +97,10 @@ public class Connection implements MessageSender {
   public String toString() {
     return connection.getUser() + ":" + connection.getServiceName() + ":"
         + connection.getConnectionID();
+  }
+  
+  public long getLastActivityTime() {
+    return lastActivityTime;
   }
 
   public void sendMessage(Message msg) {
