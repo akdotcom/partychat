@@ -62,7 +62,7 @@ public class PlusPlusBot {
       }
       
       Matcher plusPlusMatcher = PLUSPLUS_RX.matcher(message.getPlainContent());
-      if (!plusPlusMatcher.matches()) {
+      if (!plusPlusMatcher.find()) {
         throw new IllegalStateException();
       }
       String target = plusPlusMatcher.group(1);
