@@ -32,6 +32,58 @@ import java.util.regex.PatternSyntaxException;
  * @author <a href="mailto:dolapo@gmail.com">Dolapo Falola</a>
  */
 public class PlusPlusBot {
+  public static class MessageHandler
+      implements net.q00p.bots.partybot.MessageHandler {
+    private static final Pattern PLUSPLUS_RX =
+        Pattern.compile("(\\S+)(\\+\\+|--)(\\s+(.*))?$");
+    private final PlusPlusBot plusPlusBot;
+
+    public MessageHandler(PlusPlusBot plusPlusBot) {
+      this.plusPlusBot = plusPlusBot;
+    }
+    
+    
+    public boolean canHandle(Message message) {
+      return PLUSPLUS_RX.matcher(message.getPlainContent()).find();
+    }
+    
+    public boolean shouldBroadcastOriginalMessage() {
+      return true;
+    }    
+
+    public void handle(
+        Message message,
+        Subscriber subscriber,
+        PartyLine partyLine,
+        MessageResponder responder) {
+      if (partyLine == null) {
+        responder.reply(message, LineManager.NOT_IN);
+        return;
+      }
+      
+      Matcher plusPlusMatcher = PLUSPLUS_RX.matcher(message.getPlainContent());
+      if (!plusPlusMatcher.matches()) {
+        throw new IllegalStateException();
+      }
+      String target = plusPlusMatcher.group(1);
+      String delta = plusPlusMatcher.group(2);
+      String reason = plusPlusMatcher.group(4);
+      
+      String plusPlusResponse = null;
+
+      if ("++".equals(delta)) {
+        plusPlusResponse = plusPlusBot.increment(subscriber, partyLine.getName(),
+            target, reason);
+      } else {
+        plusPlusResponse = plusPlusBot.decrement(subscriber, partyLine.getName(),
+            target, reason);
+      }
+      
+      if (plusPlusResponse != null) {
+        responder.announce(partyLine, plusPlusResponse);
+      }
+    }
+  }
   
   private static final String LOG_DELIMITER = "\t";
   
@@ -54,7 +106,7 @@ public class PlusPlusBot {
   private final Set<String> BLACKLISTED_TARGETS = ImmutableSet.of("c");
   
   /**
-   * chat -> {targetscore}
+   * chat -> {target -> score}
    */
   private final Map<String, Map<String, Score>> scoreBoard = Maps.newHashMap();
   
@@ -67,11 +119,11 @@ public class PlusPlusBot {
       this.target = target;
     }
     
-    public Message increment(String from, String reason) {
+    public String increment(String from, String reason) {
       return processOp(from, reason, true);
     }
     
-    public Message decrement(String from, String reason) {
+    public String decrement(String from, String reason) {
       return processOp(from, reason, false);
     }
     
@@ -87,7 +139,7 @@ public class PlusPlusBot {
       return score - other.score;
     }
     
-    private Message processOp(String from, String reason, boolean isIncrement) {
+    private String processOp(String from, String reason, boolean isIncrement) {
       score += isIncrement ? 1 : -1;
       
       Op op = new Op(this, from, reason, isIncrement);
@@ -116,15 +168,14 @@ public class PlusPlusBot {
       this.isIncrement = isIncrement;
     }
     
-    private Message getResponseMessage() {
+    private String getResponseMessage() {
       String format = isIncrement ? INC_MESSAGE_FORMAT : DEC_MESSAGE_FORMAT;
       String formattedReason = getFormattedReason();
-      String result = String.format(format, 
-                                    parent.getTarget(),
-                                    parent.getCurrentScore(),
-                                    formattedReason);
-      
-      return new Message(null, null, result);
+      return String.format(
+          format,
+          parent.getTarget(),
+          parent.getCurrentScore(),
+          formattedReason);
     }
     
     private String getFormattedReason() {
@@ -198,18 +249,18 @@ public class PlusPlusBot {
   }
 
 
-  public Message increment(
-      Message message, String chat, String target, String reason) {
-    return doCommand(message.getFrom().getName(), chat, target, reason, true);
+  public String increment(
+      Subscriber subscriber, String chat, String target, String reason) {
+    return doCommand(subscriber.getUser().getName(), chat, target, reason, true);
   }
 
-  public Message decrement(
-      Message message, String chat, String target, String reason) {
-    return doCommand(message.getFrom().getName(), chat, target, reason, false);
+  public String decrement(
+      Subscriber subscriber, String chat, String target, String reason) {
+    return doCommand(subscriber.getUser().getName(), chat, target, reason, false);
   }
 
 
-  public Message doCommand(String from, String chat, String target,
+  public String doCommand(String from, String chat, String target,
       String reason, boolean increment) {
     
     // Normalize targets to lower case
@@ -264,7 +315,7 @@ public class PlusPlusBot {
     logFile.flush();
   }
 
-  private Message updateScore(String from, String chat, String target, 
+  private String updateScore(String from, String chat, String target, 
       String reason, boolean increment) {
     Map<String, Score> scores = getScoreBoard(chat);
 
