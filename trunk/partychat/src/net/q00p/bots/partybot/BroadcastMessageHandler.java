@@ -41,7 +41,7 @@ public class BroadcastMessageHandler implements MessageHandler {
       responder.announce(
           partyLine, 
           String.format(
-              USER_NO_LONGER_SNOOZING, subscriber.getUser().getName()));
+              USER_NO_LONGER_SNOOZING, subscriber.getDisplayName()));
     }
   }
 

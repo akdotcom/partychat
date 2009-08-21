@@ -38,11 +38,7 @@ public class PartyBot extends AbstractBot implements MessageResponder {
 
   static final String MESSAGE_FORMAT = "[%s] %s";
 
-  static final String SUB_STATUS_ONLINE = "you are currently in party chat #%s"
-      + " as %s";
-  static final String SUB_STATUS_OFFLINE = "you are not in a party chat";
-
-  // TODO(ak): load administrators from a config file  
+    // TODO(ak): load administrators from a config file  
   private static final Set<String> ADMINISTRATORS = ImmutableSet.of(
     "apatil@gmail.com",
     "mbolin@gmail.com",
@@ -162,16 +158,6 @@ public class PartyBot extends AbstractBot implements MessageResponder {
     // Do nothing if there's somehow no partyline
     if (partyLine != null) {
       broadcast(null, partyLine, message, true);
-    }
-  }
-
-  public String getStatus(Subscriber sub) {
-    PartyLine partyLine = lineManager.getPartyLine(sub);
-    if (partyLine == null) {
-      return SUB_STATUS_OFFLINE;
-    } else {
-      return String.format(SUB_STATUS_ONLINE, partyLine.getName(), sub
-          .getDisplayName());
     }
   }
 
