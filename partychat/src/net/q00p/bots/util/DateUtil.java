@@ -132,6 +132,9 @@ public final class DateUtil {
    * Something like 10m or 10s or 10d with loss of precision.
    */
   public static String prettyFormatTime(long ms) {
+    if (ms >= 0 && ms < 1000) {
+      return "< 1s";
+    }
     StringBuilder sb = new StringBuilder();
     if (ms < 0) {
       sb.append("negative ");
