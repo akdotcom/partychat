@@ -58,7 +58,6 @@ public class PartyBot extends AbstractBot implements MessageResponder {
     messageHandlers = ImmutableList.of(
         new PlusPlusBot.MessageHandler(plusPlusBot),
         new SearchReplaceMessageHandler(),
-        new UrlInfoMessageHandler(),
         new BroadcastMessageHandler()
     );
     

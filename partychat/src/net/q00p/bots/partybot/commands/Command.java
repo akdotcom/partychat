@@ -88,10 +88,10 @@ public enum Command {
       "that they can be copied and pasted into an email program",
       new MailCommandHandler()),
       
-  URLINFO(Pattern.compile("/urlinfo(\\s+)?(.*)"), "/urlinfo [url] - extracts "
-          + "information about a URL (e.g. its title). If no URL is provided, "
-          + "then the most recently mentioned URL is used",
-          new UrlInfoCommandHandler()),
+  SHARE(Pattern.compile("/share\\s+(\\S+)(\\s+)?(\\S.+)?"), 
+        "/share url [annotation] - Shares an URL with the party chat. "
+        + "Extracts information about a URL (e.g. its title) before posting it",
+        new ShareCommandHandler()),
 
   // Hidden commands
       
