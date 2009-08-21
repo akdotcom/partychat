@@ -32,13 +32,12 @@ import java.util.TimerTask;
 
 public class PartyBot extends AbstractBot implements MessageResponder {
   private final LineManager lineManager;
-  private final Timer timer;
   private final StateSaver sh;
   private final PlusPlusBot plusPlusBot;
 
-  static final String MESSAGE_FORMAT = "[%s] %s";
+  private static final String MESSAGE_FORMAT = "[%s] %s";
 
-    // TODO(ak): load administrators from a config file  
+  // TODO(ak): load administrators from a config file  
   private static final Set<String> ADMINISTRATORS = ImmutableSet.of(
     "apatil@gmail.com",
     "mbolin@gmail.com",
@@ -61,12 +60,12 @@ public class PartyBot extends AbstractBot implements MessageResponder {
         new SearchReplaceMessageHandler(),
         new BroadcastMessageHandler()
     );
+    
+    // State saving (every 15 minutes and at shutdown)
     sh = new StateSaver(lineManager);
     Runtime.getRuntime().addShutdownHook(new Thread(sh));
-
-    timer = new Timer();
-    timer.scheduleAtFixedRate(sh, new Date(), 15 * 60 * 1000); // every 15
-    // minutes.
+    Timer timer = new Timer();
+    timer.scheduleAtFixedRate(sh, new Date(), 15 * 60 * 1000);
   }
 
   @Override
@@ -185,12 +184,12 @@ public class PartyBot extends AbstractBot implements MessageResponder {
   }
 
   //TODO: This is lame. We should have some sort of backend
-  class StateSaver extends TimerTask {
-    LineManager manager;
+  private static class StateSaver extends TimerTask {
+    private final LineManager lineManager;
 
-    public StateSaver(LineManager managedClass) {
+    public StateSaver(LineManager lineManager) {
       super();
-      this.manager = managedClass;
+      this.lineManager = lineManager;
     }
 
     @Override
